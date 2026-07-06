@@ -20,40 +20,50 @@ export function useCurrentLocation() {
     let cancelled = false;
 
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (cancelled) return;
-      if (status !== "granted") {
-        setPermissionDenied(true);
-        return;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (cancelled) return;
+        if (status !== "granted") {
+          setPermissionDenied(true);
+          return;
+        }
+        sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Balanced,
+            timeInterval: FOREGROUND_INTERVAL_MS,
+            distanceInterval: 25,
+          },
+          (pos) => {
+            const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setCoords(coords);
+            // 로그인 상태면 서버에도 위치 반영 (프라이버시 필터는 서버 RPC가 담당)
+            if (supabase && session) {
+              supabase
+                .rpc("upsert_my_location", {
+                  lat: coords.lat,
+                  lng: coords.lng,
+                  acc: pos.coords.accuracy,
+                })
+                .then(({ error }) => {
+                  if (error) console.warn("upsert_my_location failed", error.message);
+                });
+            }
+          },
+        );
+      } catch (e) {
+        // 에뮬레이터 등 위치 서비스가 불안정한 환경에서 앱이 죽지 않도록 방어
+        console.warn("location watch unavailable:", e);
       }
-      sub = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.Balanced,
-          timeInterval: FOREGROUND_INTERVAL_MS,
-          distanceInterval: 25,
-        },
-        (pos) => {
-          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setCoords(coords);
-          // 로그인 상태면 서버에도 위치 반영 (프라이버시 필터는 서버 RPC가 담당)
-          if (supabase && session) {
-            supabase
-              .rpc("upsert_my_location", {
-                lat: coords.lat,
-                lng: coords.lng,
-                acc: pos.coords.accuracy,
-              })
-              .then(({ error }) => {
-                if (error) console.warn("upsert_my_location failed", error.message);
-              });
-          }
-        },
-      );
     })();
 
     return () => {
       cancelled = true;
-      sub?.remove();
+      try {
+        sub?.remove();
+      } catch (e) {
+        // expo-location 내부 정리 버그(removeSubscription) 방어 — 무시해도 안전
+        console.warn("location unsubscribe failed:", e);
+      }
     };
   }, [session, setCoords, setPermissionDenied]);
 }
