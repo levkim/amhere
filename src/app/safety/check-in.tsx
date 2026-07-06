@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
@@ -8,6 +17,8 @@ import { Card } from "@/components/ui/card";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useMyContacts } from "@/features/safety/contacts";
 import { usePlacePicker } from "@/features/places/store";
+import { useCreatePost } from "@/features/feed/hooks";
+import { useEffectiveCoords } from "@/stores/location";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
 
 const DURATIONS = [2, 4, 6, 8, 10, 12] as const;
@@ -28,10 +39,13 @@ export default function CheckIn() {
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
   const [showIosPicker, setShowIosPicker] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [shareToFeed, setShareToFeed] = useState(false); // 기본 꺼짐 (안전 원칙)
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
   const { data: contacts } = useMyContacts();
+  const { mutateAsync: createPost } = useCreatePost();
+  const coords = useEffectiveCoords();
 
   // 장소 선택 화면에서 고른 장소를 반영 (인스타그램식 위치 추가)
   const pickedPlace = usePlacePicker((s) => s.picked);
@@ -95,6 +109,22 @@ export default function CheckIn() {
         expectedEndAt,
         contactId: effectiveContactId,
       });
+
+      // 선택했을 때만 '지금 주변에서'에 시작 소식 공유 (실패해도 체크인은 유지)
+      if (shareToFeed) {
+        try {
+          await createPost({
+            body: `🏔️ ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 시작! 근처에 계신 분은 버디 요청 주세요.`,
+            tags: ["체크인"],
+            activity,
+            lat: coords.lat,
+            lng: coords.lng,
+          });
+        } catch (e) {
+          console.warn("share-to-feed failed:", e);
+        }
+      }
+
       router.back();
     } catch (e) {
       Alert.alert("체크인 실패", e instanceof Error ? e.message : "다시 시도해 주세요.");
@@ -220,6 +250,22 @@ export default function CheckIn() {
           </Card>
         )}
 
+        <Text style={styles.sectionTitle}>주변에 공유</Text>
+        <View style={styles.shareRow}>
+          <View style={styles.shareText}>
+            <Text style={styles.shareTitle}>&lsquo;지금 주변에서&rsquo;에 시작 소식 올리기</Text>
+            <Text style={styles.shareDesc}>
+              켜면 &ldquo;🏔️ ○○에서 {ACTIVITY_LABELS[activity]} 시작!&rdquo; 포스트가 주변
+              피드에 공유돼요. 같은 곳의 버디를 만날 수 있어요. (끄면 아무에게도 공개되지 않아요)
+            </Text>
+          </View>
+          <Switch
+            value={shareToFeed}
+            onValueChange={setShareToFeed}
+            trackColor={{ true: colors.primary, false: colors.border }}
+          />
+        </View>
+
         <Text style={styles.notice}>
           {expectedEndAt
             ? `${formatDateTime(expectedEndAt)}에서 15분이 지나도 체크아웃하지 않으면, 마지막 위치와 함께 알림이 발송돼요. 종료 30분 전에 리마인더도 보내드려요.`
@@ -276,6 +322,10 @@ const styles = StyleSheet.create({
   optionText: { ...typography.body, color: colors.subtext },
   optionTextActive: { color: colors.text, fontWeight: "600" },
   contactList: { gap: spacing.sm },
+  shareRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  shareText: { flex: 1 },
+  shareTitle: { ...typography.body, color: colors.text, fontWeight: "600" },
+  shareDesc: { ...typography.caption, color: colors.subtext, lineHeight: 18, marginTop: 2 },
   noContact: { gap: spacing.sm + 4 },
   noContactText: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   notice: {

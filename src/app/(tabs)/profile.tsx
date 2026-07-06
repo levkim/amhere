@@ -34,6 +34,11 @@ export default function Profile() {
             variant="secondary"
             onPress={() => router.push("/profile/edit")}
           />
+          <Button
+            label="📖 내 활동 기록"
+            variant="secondary"
+            onPress={() => router.push("/profile/history")}
+          />
         </View>
       </Card>
 
@@ -61,7 +66,7 @@ const styles = StyleSheet.create({
   name: { ...typography.title, color: colors.text },
   bio: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
-  editBtn: { marginTop: spacing.sm },
+  editBtn: { marginTop: spacing.sm, gap: spacing.sm },
   sectionTitle: { ...typography.heading, color: colors.text },
   desc: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   strong: { color: colors.text, fontWeight: "600" },

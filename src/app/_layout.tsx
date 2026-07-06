@@ -48,6 +48,7 @@ export default function RootLayout() {
             name="profile/edit"
             options={{ title: "프로필 편집", presentation: "modal" }}
           />
+          <Stack.Screen name="profile/history" options={{ title: "내 활동 기록" }} />
           <Stack.Screen
             name="safety/check-in"
             options={{ title: "안전 체크인", presentation: "modal" }}
