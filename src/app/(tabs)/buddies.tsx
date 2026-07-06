@@ -1,0 +1,112 @@
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Screen } from "@/components/ui/screen";
+import { Card } from "@/components/ui/card";
+import { Tag } from "@/components/ui/tag";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useMyBuddyRequests, useMyUserId, useRespondToRequest } from "@/features/matching/hooks";
+import type { BuddyRequest } from "@/features/matching/types";
+import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
+
+const STATUS_LABELS: Record<BuddyRequest["status"], string> = {
+  pending: "대기 중",
+  accepted: "매칭 성사",
+  declined: "거절됨",
+  cancelled: "취소됨",
+};
+
+function RequestCard({ request }: { request: BuddyRequest }) {
+  const myId = useMyUserId();
+  const { mutate: respond, isPending } = useRespondToRequest();
+
+  const incoming = request.addresseeId === myId;
+  const counterpart = incoming ? request.requesterNickname : request.addresseeNickname;
+
+  return (
+    <Card style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.nickname}>
+          {counterpart} {incoming ? "" : "(보낸 요청)"}
+        </Text>
+        <Tag
+          label={STATUS_LABELS[request.status]}
+          tone={request.status === "accepted" ? "accent" : "default"}
+        />
+      </View>
+      <Text style={styles.meta}>
+        {ACTIVITY_LABELS[request.activity]} · {request.region} · {request.plannedDate}
+      </Text>
+      {request.message ? <Text style={styles.message}>{request.message}</Text> : null}
+
+      {incoming && request.status === "pending" ? (
+        <View style={styles.actions}>
+          <View style={styles.actionBtn}>
+            <Button
+              label="수락"
+              onPress={() => respond({ id: request.id, status: "accepted" })}
+              loading={isPending}
+            />
+          </View>
+          <View style={styles.actionBtn}>
+            <Button
+              label="거절"
+              variant="secondary"
+              onPress={() => respond({ id: request.id, status: "declined" })}
+              disabled={isPending}
+            />
+          </View>
+        </View>
+      ) : null}
+
+      {request.status === "accepted" ? (
+        <Button
+          label="채팅 열기"
+          variant="secondary"
+          onPress={() => router.push(`/chat/${request.id}`)}
+        />
+      ) : null}
+    </Card>
+  );
+}
+
+export default function Buddies() {
+  const { data: requests } = useMyBuddyRequests();
+
+  return (
+    <Screen padded={false}>
+      <FlatList
+        data={requests}
+        keyExtractor={(r) => r.id}
+        renderItem={({ item }) => <RequestCard request={item} />}
+        contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          <View style={styles.findCta}>
+            <Button label="🔍 주변에서 버디 찾기" onPress={() => router.push("/buddy/find")} />
+          </View>
+        }
+        ListEmptyComponent={
+          <EmptyState
+            emoji="🤝"
+            title="아직 버디 요청이 없어요"
+            description="주변에서 같은 활동을 하는 사람을 찾아 요청을 보내보세요."
+            ctaLabel="버디 찾기"
+            onCta={() => router.push("/buddy/find")}
+          />
+        }
+      />
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  list: { padding: spacing.md, paddingBottom: spacing.xl, flexGrow: 1 },
+  findCta: { marginBottom: spacing.md },
+  card: { marginBottom: spacing.sm + 4, gap: spacing.sm },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  nickname: { ...typography.heading, color: colors.text },
+  meta: { ...typography.caption, color: colors.subtext },
+  message: { ...typography.body, color: colors.text, lineHeight: 21 },
+  actions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs },
+  actionBtn: { flex: 1 },
+});

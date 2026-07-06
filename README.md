@@ -1,56 +1,58 @@
-# Welcome to your Expo app 👋
+# Amhere (여기있어) 🏔️
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+아웃도어 활동자(스키/보드, 백컨트리, 하이킹, 트레킹, 러닝)를 위한 **위치 기반 실시간 커뮤니티 앱**.
+"지금, 여기, 나와 같은 사람"을 지도 위에서 보여준다.
 
-## Get started
+## 문서
 
-1. Install dependencies
+| 문서 | 내용 |
+|---|---|
+| [docs/PRD.md](docs/PRD.md) | 제품 정의: 페르소나, MVP 범위, 성공 지표, 로드맵 |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 앱 구조: 스택, 폴더, 상태 관리, API 레이어 규칙 |
+| [docs/BACKEND.md](docs/BACKEND.md) | Supabase 설계: 스키마, RLS, 위치 프라이버시 모델, 셋업 순서 |
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 실행
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Expo Go 앱(iOS/Android)으로 QR을 스캔하면 바로 실행됩니다.
+**`.env` 없이 실행하면 데모 모드**(목 데이터)로 동작합니다.
 
-### Other setup steps
+### 실제 백엔드 연결
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+1. [docs/BACKEND.md](docs/BACKEND.md) §11 셋업 순서대로 Supabase 프로젝트 생성 + 마이그레이션 적용
+2. `.env.example`을 `.env`로 복사하고 URL/anon key 입력
+3. 재시작하면 전화번호 로그인이 활성화됩니다
 
-## Learn more
+## 스택
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Expo SDK 57** (React Native, TypeScript) + Expo Router
+- **Supabase** — Auth(전화 OTP), Postgres+PostGIS, Realtime, Storage
+- **TanStack Query** (서버 상태) + **Zustand** (클라이언트 상태)
+- **EAS Build** — Windows에서 iOS 빌드 (Mac 불필요)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 폴더 구조 (요약)
 
-## Join the community
+```
+src/
+├── app/          # 화면 = 라우트 (Expo Router). 로직 없이 조립만
+├── components/   # 공용 UI (theme/tokens.ts의 토큰만 사용)
+├── features/     # 도메인 로직: feed / matching / safety / location
+├── lib/          # supabase, query-client
+├── stores/       # Zustand: session, location
+└── theme/        # 디자인 토큰
+supabase/
+├── migrations/   # DB 스키마 (PostGIS + RLS)
+└── functions/    # safety-sweep (체크아웃 초과 판정 cron)
+```
 
-Join our community of developers creating universal apps.
+## 다음 마일스톤
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [ ] Mapbox 지도 활성화 — `@rnmapbox/maps` 설치 + EAS dev build (Expo Go에서는 동작 안 함)
+- [ ] 포스트 작성 화면 (사진 업로드 포함)
+- [ ] 버디 요청 보내기/수락 플로우 + 채팅
+- [ ] 백그라운드 위치 (안전 체크인 활성 시에만) + 비상연락처 SMS
+- [ ] EAS Build 셋업 (`eas build:configure`) 후 실기기 빌드

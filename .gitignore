@@ -31,7 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# EAS build config contains Mapbox download token — keep local
+eas.json
 
 # typescript
 *.tsbuildinfo
