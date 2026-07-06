@@ -9,6 +9,7 @@ export type CheckInRecord = {
   id: string;
   activity: Activity;
   locationName: string | null;
+  tags: string[];
   startedAt: string;
   expectedEndAt: string;
   completedAt: string | null;
@@ -25,7 +26,9 @@ export function useMyCheckIns() {
 
       const { data, error } = await supabase
         .from("check_ins")
-        .select("id, activity, location_name, started_at, expected_end_at, completed_at, status")
+        .select(
+          "id, activity, location_name, tags, started_at, expected_end_at, completed_at, status",
+        )
         .order("started_at", { ascending: false })
         .limit(50);
       if (error) throw new Error(error.message);
@@ -34,6 +37,7 @@ export function useMyCheckIns() {
         id: row.id,
         activity: row.activity,
         locationName: row.location_name,
+        tags: row.tags ?? [],
         startedAt: row.started_at,
         expectedEndAt: row.expected_end_at,
         completedAt: row.completed_at,

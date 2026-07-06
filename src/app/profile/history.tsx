@@ -49,6 +49,13 @@ function RecordCard({ record }: { record: CheckInRecord }) {
         {ACTIVITY_LABELS[record.activity]} · {formatDate(record.startedAt)} 시작
         {duration ? ` · ${duration}` : ""}
       </Text>
+      {record.tags.length > 0 ? (
+        <View style={styles.tags}>
+          {record.tags.map((t) => (
+            <Tag key={t} label={`#${t}`} />
+          ))}
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -106,4 +113,5 @@ const styles = StyleSheet.create({
   },
   title: { ...typography.heading, color: colors.text, flex: 1 },
   meta: { ...typography.caption, color: colors.subtext },
+  tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
 });

@@ -12,6 +12,7 @@ type ActiveCheckIn = {
   id: string;
   activity: Activity;
   locationName: string;
+  tags: string[];
   startedAt: string;
   expectedEndAt: string;
   reminderNotifId: string | null;
@@ -20,6 +21,7 @@ type ActiveCheckIn = {
 type StartInput = {
   activity: Activity;
   locationName: string;
+  tags: string[];
   expectedEndAt: Date;
   contactId: string | null;
 };
@@ -56,7 +58,7 @@ async function scheduleReminder(expectedEndAt: Date): Promise<string | null> {
 export const useSafetyStore = create<SafetyState>((set, get) => ({
   active: null,
 
-  start: async ({ activity, locationName, expectedEndAt, contactId }) => {
+  start: async ({ activity, locationName, tags, expectedEndAt, contactId }) => {
     const startedAt = new Date();
 
     let id = `local-${Date.now()}`; // 데모 모드용 로컬 ID
@@ -69,6 +71,7 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
             user_id: user.id,
             activity,
             location_name: locationName,
+            tags,
             contact_id: contactId,
             expected_end_at: expectedEndAt.toISOString(),
           })
@@ -86,6 +89,7 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         id,
         activity,
         locationName,
+        tags,
         startedAt: startedAt.toISOString(),
         expectedEndAt: expectedEndAt.toISOString(),
         reminderNotifId,

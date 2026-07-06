@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useMyContacts } from "@/features/safety/contacts";
 import { usePlacePicker } from "@/features/places/store";
+import { CHECKIN_TAGS } from "@/features/safety/tags";
 import { useCreatePost } from "@/features/feed/hooks";
 import { useEffectiveCoords } from "@/stores/location";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
@@ -39,6 +40,7 @@ export default function CheckIn() {
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
   const [showIosPicker, setShowIosPicker] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [myTags, setMyTags] = useState<string[]>([]);
   const [shareToFeed, setShareToFeed] = useState(false); // 기본 꺼짐 (안전 원칙)
   const [loading, setLoading] = useState(false);
 
@@ -106,16 +108,18 @@ export default function CheckIn() {
       await start({
         activity,
         locationName: locationName.trim(),
+        tags: myTags,
         expectedEndAt,
         contactId: effectiveContactId,
       });
 
       // 선택했을 때만 '지금 주변에서'에 시작 소식 공유 (실패해도 체크인은 유지)
+      // 문구 대신 내가 고른 활동 태그가 노출된다
       if (shareToFeed) {
         try {
           await createPost({
-            body: `🏔️ ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 시작! 근처에 계신 분은 버디 요청 주세요.`,
-            tags: ["체크인"],
+            body: `🏔️ ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 시작!`,
+            tags: ["체크인", ...myTags],
             activity,
             lat: coords.lat,
             lng: coords.lng,
@@ -213,6 +217,31 @@ export default function CheckIn() {
             }}
           />
         ) : null}
+
+        <Text style={styles.sectionTitle}>나의 활동 태그</Text>
+        <Text style={styles.tagHint}>
+          나를 보여주는 태그를 골라보세요 (여러 개 가능). 주변에 공유하면 태그가 함께 노출돼요.
+        </Text>
+        <View style={styles.options}>
+          {CHECKIN_TAGS.map((tag) => {
+            const on = myTags.includes(tag.label);
+            return (
+              <Pressable
+                key={tag.label}
+                onPress={() =>
+                  setMyTags((prev) =>
+                    on ? prev.filter((t) => t !== tag.label) : [...prev, tag.label],
+                  )
+                }
+                style={[styles.option, on && styles.optionActive]}
+              >
+                <Text style={[styles.optionText, on && styles.optionTextActive]}>
+                  {tag.emoji} {tag.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         <Text style={styles.sectionTitle}>비상연락처</Text>
         {contacts && contacts.length > 0 ? (
@@ -321,6 +350,12 @@ const styles = StyleSheet.create({
   optionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   optionText: { ...typography.body, color: colors.subtext },
   optionTextActive: { color: colors.text, fontWeight: "600" },
+  tagHint: {
+    ...typography.caption,
+    color: colors.subtext,
+    lineHeight: 18,
+    marginBottom: spacing.sm,
+  },
   contactList: { gap: spacing.sm },
   shareRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   shareText: { flex: 1 },
