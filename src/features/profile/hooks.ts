@@ -43,6 +43,34 @@ export function useMyProfile() {
   });
 }
 
+/** 다른 사용자의 공개 프로필 (버디 요청 전 상세 보기용) */
+export function useUserProfile(userId: string) {
+  return useQuery({
+    queryKey: ["profile", userId],
+    queryFn: async (): Promise<Profile> => {
+      if (!supabase) {
+        // 데모 모드: 목 유저 정보
+        return {
+          id: userId,
+          nickname: "데모 유저",
+          bio: "데모 모드에서는 프로필 상세를 흉내만 내요.",
+          activities: ["ski", "backcountry"],
+          privacy: "approximate",
+          level: 3,
+        };
+      }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nickname, bio, activities, privacy, level")
+        .eq("id", userId)
+        .single();
+      if (error) throw new Error(error.message);
+      const privacy: LocationPrivacy = data.privacy === "ghost" ? "ghost" : "approximate";
+      return { ...data, privacy } as Profile;
+    },
+  });
+}
+
 export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (patch: Partial<Omit<Profile, "id" | "level">>) => {

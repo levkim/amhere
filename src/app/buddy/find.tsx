@@ -11,7 +11,7 @@ import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
 function UserCard({ user }: { user: NearbyUser }) {
   return (
-    <Card style={styles.card}>
+    <Card onPress={() => router.push(`/user/${user.userId}`)} style={styles.card}>
       <View style={styles.row}>
         <View style={styles.info}>
           <Text style={styles.nickname}>{user.nickname}</Text>

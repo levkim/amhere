@@ -19,6 +19,8 @@ const INITIAL_POSTS: Post[] = [
     distanceM: 420,
     createdAt: hoursAgo(1),
     expiresAt: hoursLater(23),
+    helpfulCount: 5,
+    iHelped: false,
   },
   {
     id: "mock-2",
@@ -34,6 +36,8 @@ const INITIAL_POSTS: Post[] = [
     distanceM: 1350,
     createdAt: hoursAgo(3),
     expiresAt: hoursLater(21),
+    helpfulCount: 12,
+    iHelped: true,
   },
   {
     id: "mock-3",
@@ -49,6 +53,8 @@ const INITIAL_POSTS: Post[] = [
     distanceM: 890,
     createdAt: hoursAgo(0.5),
     expiresAt: hoursLater(23.5),
+    helpfulCount: 2,
+    iHelped: false,
   },
 ];
 
@@ -76,8 +82,22 @@ export function addMockPost(input: {
       distanceM: 0,
       createdAt: new Date().toISOString(),
       expiresAt: hoursLater(24),
+      helpfulCount: 0,
+      iHelped: false,
       ...rest,
     },
     ...posts,
   ];
+}
+
+export function toggleMockHelpful(postId: string): void {
+  posts = posts.map((p) =>
+    p.id === postId
+      ? { ...p, iHelped: !p.iHelped, helpfulCount: p.helpfulCount + (p.iHelped ? -1 : 1) }
+      : p,
+  );
+}
+
+export function deleteMockPost(postId: string): void {
+  posts = posts.filter((p) => p.id !== postId);
 }

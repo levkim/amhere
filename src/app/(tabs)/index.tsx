@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
@@ -10,7 +11,14 @@ import { useNearbyUsers } from "@/features/matching/hooks";
 import { useCurrentLocation } from "@/features/location/use-current-location";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useEffectiveCoords } from "@/stores/location";
-import { ACTIVITY_LABELS, colors, radius, spacing, typography } from "@/theme/tokens";
+import {
+  ACTIVITY_LABELS,
+  colors,
+  radius,
+  spacing,
+  typography,
+  type Activity,
+} from "@/theme/tokens";
 
 // 라이브 맵 (홈) — Mapbox 지도 위에 내 위치·주변 포스트·주변 사용자를 표시한다.
 // 웹에서는 live-map.web.tsx의 안내 화면으로 대체된다 (Metro가 자동 선택).
@@ -21,11 +29,47 @@ export default function MapHome() {
   const { data: posts } = useNearbyPosts();
   const { data: users } = useNearbyUsers();
   const activeCheckIn = useSafetyStore((s) => s.active);
+  const [activityFilter, setActivityFilter] = useState<Activity | null>(null);
+
+  const filteredPosts = useMemo(
+    () => (activityFilter ? (posts ?? []).filter((p) => p.activity === activityFilter) : posts),
+    [posts, activityFilter],
+  );
+  const filteredUsers = useMemo(
+    () => (activityFilter ? (users ?? []).filter((u) => u.activity === activityFilter) : users),
+    [users, activityFilter],
+  );
 
   return (
     <Screen padded={false}>
       <View style={styles.mapWrap}>
-        <LiveMap center={coords} posts={posts ?? []} users={users ?? []} />
+        <LiveMap center={coords} posts={filteredPosts ?? []} users={filteredUsers ?? []} />
+        {/* 활동 필터 (지도 위 오버레이) */}
+        <View style={styles.filterOverlay}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.filterChips}>
+              <Pressable
+                onPress={() => setActivityFilter(null)}
+                style={[styles.chip, activityFilter === null && styles.chipActive]}
+              >
+                <Text style={[styles.chipText, activityFilter === null && styles.chipTextActive]}>
+                  전체
+                </Text>
+              </Pressable>
+              {(Object.keys(ACTIVITY_LABELS) as Activity[]).map((key) => (
+                <Pressable
+                  key={key}
+                  onPress={() => setActivityFilter(activityFilter === key ? null : key)}
+                  style={[styles.chip, activityFilter === key && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, activityFilter === key && styles.chipTextActive]}>
+                    {ACTIVITY_LABELS[key]}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
       </View>
 
       <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent}>
@@ -78,6 +122,19 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.lg,
     backgroundColor: colors.surfaceHigh,
   },
+  filterOverlay: { position: "absolute", top: spacing.sm, left: 0, right: 0 },
+  filterChips: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md },
+  chip: {
+    backgroundColor: "rgba(15, 27, 45, 0.85)",
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+  },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { ...typography.caption, color: colors.subtext },
+  chipTextActive: { color: colors.text, fontWeight: "600" },
   sheet: { flex: 1 },
   sheetContent: { padding: spacing.md, paddingBottom: spacing.xl },
   safetyCard: { marginBottom: spacing.lg, gap: spacing.sm },

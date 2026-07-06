@@ -43,6 +43,7 @@ export default function RootLayout() {
             options={{ title: "버디 요청", presentation: "modal" }}
           />
           <Stack.Screen name="chat/[requestId]" options={{ title: "채팅" }} />
+          <Stack.Screen name="user/[id]" options={{ title: "프로필" }} />
           <Stack.Screen
             name="profile/edit"
             options={{ title: "프로필 편집", presentation: "modal" }}
@@ -51,6 +52,7 @@ export default function RootLayout() {
             name="safety/check-in"
             options={{ title: "안전 체크인", presentation: "modal" }}
           />
+          <Stack.Screen name="safety/contacts" options={{ title: "비상연락처" }} />
           <Stack.Screen
             name="safety/report"
             options={{ title: "신고/차단", presentation: "modal" }}

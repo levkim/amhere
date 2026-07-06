@@ -38,7 +38,15 @@ export default {
       output: "static",
       favicon: "./assets/images/favicon.png",
     },
+    // OTA 업데이트 (EAS Update): 재빌드 없이 JS 변경분을 배포
+    updates: {
+      url: "https://u.expo.dev/97893b21-532e-4079-b936-16e4755369b1",
+    },
+    runtimeVersion: {
+      policy: "appVersion",
+    },
     plugins: [
+      "@react-native-community/datetimepicker",
       "expo-router",
       [
         "expo-splash-screen",

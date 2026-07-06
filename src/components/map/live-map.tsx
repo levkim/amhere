@@ -16,6 +16,8 @@ const ACTIVITY_EMOJI: Record<string, string> = {
   hiking: "🥾",
   trekking: "🎒",
   running: "🏃",
+  mtb: "🚵",
+  cycling: "🚴",
 };
 
 type Props = {

@@ -14,6 +14,10 @@ export type Post = {
   distanceM: number;
   createdAt: string;
   expiresAt: string;
+  /** "도움됐어요" 수 */
+  helpfulCount: number;
+  /** 내가 도움됐어요를 눌렀는지 */
+  iHelped: boolean;
 };
 
 export type NewPost = {

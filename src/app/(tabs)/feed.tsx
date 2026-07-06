@@ -1,13 +1,35 @@
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text } from "react-native";
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PostCard } from "@/components/post-card";
 import { useNearbyPosts } from "@/features/feed/hooks";
-import { colors, spacing, typography } from "@/theme/tokens";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export default function Feed() {
   const { data: posts, isLoading, isError, refetch, isRefetching } = useNearbyPosts();
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  // 현재 피드에 존재하는 태그만 필터 후보로 노출
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+    (posts ?? []).forEach((p) => p.tags.forEach((t) => tags.add(t)));
+    return [...tags];
+  }, [posts]);
+
+  const filtered = useMemo(
+    () => (selectedTag ? (posts ?? []).filter((p) => p.tags.includes(selectedTag)) : posts),
+    [posts, selectedTag],
+  );
 
   if (isLoading) {
     return (
@@ -33,8 +55,36 @@ export default function Feed() {
 
   return (
     <Screen padded={false}>
+      {availableTags.length > 0 ? (
+        <View style={styles.filterBar}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.filterChips}>
+              <Pressable
+                onPress={() => setSelectedTag(null)}
+                style={[styles.chip, selectedTag === null && styles.chipActive]}
+              >
+                <Text style={[styles.chipText, selectedTag === null && styles.chipTextActive]}>
+                  전체
+                </Text>
+              </Pressable>
+              {availableTags.map((tag) => (
+                <Pressable
+                  key={tag}
+                  onPress={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  style={[styles.chip, selectedTag === tag && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, selectedTag === tag && styles.chipTextActive]}>
+                    #{tag}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      ) : null}
+
       <FlatList
-        data={posts}
+        data={filtered}
         keyExtractor={(p) => p.id}
         renderItem={({ item }) => <PostCard post={item} />}
         contentContainerStyle={styles.list}
@@ -44,12 +94,19 @@ export default function Feed() {
           <Text style={styles.freshness}>모든 포스트는 24시간 후 사라져요 — 지금의 정보만.</Text>
         }
         ListEmptyComponent={
-          <EmptyState
-            title="아직 주변 소식이 없어요"
-            description="이 지역의 첫 포스트를 남겨보세요. 설질, 트레일 상태, 뭐든 좋아요."
-            ctaLabel="첫 포스트 남기기"
-            onCta={() => router.push("/post/new")}
-          />
+          selectedTag ? (
+            <EmptyState
+              title={`#${selectedTag} 포스트가 없어요`}
+              description="다른 태그를 선택하거나 전체를 확인해 보세요."
+            />
+          ) : (
+            <EmptyState
+              title="아직 주변 소식이 없어요"
+              description="이 지역의 첫 포스트를 남겨보세요. 설질, 트레일 상태, 뭐든 좋아요."
+              ctaLabel="첫 포스트 남기기"
+              onCta={() => router.push("/post/new")}
+            />
+          )
         }
       />
       <Pressable
@@ -64,6 +121,19 @@ export default function Feed() {
 
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
+  filterBar: { paddingVertical: spacing.sm },
+  filterChips: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md },
+  chip: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+  },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { ...typography.caption, color: colors.subtext },
+  chipTextActive: { color: colors.text, fontWeight: "600" },
   list: { padding: spacing.md, paddingBottom: spacing.xl, flexGrow: 1 },
   freshness: {
     ...typography.caption,

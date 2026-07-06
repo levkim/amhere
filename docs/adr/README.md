@@ -58,3 +58,4 @@
 | [0004](0004-mapbox.md) | 지도: Mapbox | 채택 |
 | [0005](0005-location-privacy-v2.md) | 위치 프라이버시: 서버 가상화 (10km/500m) | 채택 |
 | [0006](0006-push-via-db-triggers.md) | 푸시: DB 트리거 → Expo Push API 직접 호출 | 채택 |
+| [0007](0007-ota-updates.md) | 배포: EAS Update(OTA)로 JS 즉시 배포 | 채택 |

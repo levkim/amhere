@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { useEffectiveCoords } from "@/stores/location";
-import { createPost, fetchNearbyPosts } from "./api";
+import { createPost, deletePost, fetchNearbyPosts, toggleHelpful } from "./api";
 import type { NewPost } from "./types";
 
 /** 좌표를 ~1km 격자로 뭉개서 쿼리 키로 사용 (미세 이동마다 refetch 방지) */
@@ -23,5 +23,20 @@ export function useCreatePost() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
+  });
+}
+
+export function useToggleHelpful() {
+  return useMutation({
+    mutationFn: ({ postId, iHelped }: { postId: string; iHelped: boolean }) =>
+      toggleHelpful(postId, iHelped),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feed"] }),
+  });
+}
+
+export function useDeletePost() {
+  return useMutation({
+    mutationFn: (postId: string) => deletePost(postId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feed"] }),
   });
 }

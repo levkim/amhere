@@ -41,12 +41,14 @@ export const typography = {
 } as const;
 
 export const ACTIVITY_LABELS = {
-  ski: "스키",
-  snowboard: "스노보드",
-  backcountry: "백컨트리",
+  ski: "스키장",
+  snowboard: "프리라이딩",
+  backcountry: "백컨트리 스키/보딩",
   hiking: "하이킹",
   trekking: "트레킹",
   running: "러닝",
+  mtb: "MTB",
+  cycling: "싸이클",
 } as const;
 
 export type Activity = keyof typeof ACTIVITY_LABELS;

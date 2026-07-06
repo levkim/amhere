@@ -1,10 +1,12 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useNearbyPosts } from "@/features/feed/hooks";
+import { HelpfulButton } from "@/components/post-card";
+import { useDeletePost, useNearbyPosts } from "@/features/feed/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
@@ -12,7 +14,27 @@ export default function PostDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: posts } = useNearbyPosts();
   const myId = useMyUserId();
+  const { mutateAsync: removePost, isPending: deleting } = useDeletePost();
   const post = posts?.find((p) => p.id === id);
+
+  const confirmDelete = () => {
+    if (!post) return;
+    Alert.alert("포스트 삭제", "이 포스트를 삭제할까요? 되돌릴 수 없어요.", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "삭제",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await removePost(post.id);
+            router.back();
+          } catch (e) {
+            Alert.alert("삭제 실패", e instanceof Error ? e.message : "다시 시도해 주세요.");
+          }
+        },
+      },
+    ]);
+  };
 
   if (!post) {
     return (
@@ -46,7 +68,17 @@ export default function PostDetail() {
           })}{" "}
           만료
         </Text>
+        <View style={styles.helpfulRow}>
+          <HelpfulButton post={post} />
+        </View>
       </Card>
+
+      {/* 내 포스트면 삭제 */}
+      {post.authorId === myId ? (
+        <View style={styles.deleteBtn}>
+          <Button label="포스트 삭제" variant="danger" onPress={confirmDelete} loading={deleting} />
+        </View>
+      ) : null}
 
       {/* 내 포스트가 아니면 신고/차단 진입점 */}
       {post.authorId !== myId ? (
@@ -73,6 +105,8 @@ const styles = StyleSheet.create({
   image: { width: "100%", height: 240, borderRadius: 12 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
   meta: { ...typography.caption, color: colors.subtext },
+  helpfulRow: { flexDirection: "row" },
+  deleteBtn: { marginTop: spacing.lg },
   reportLink: { marginTop: spacing.lg, alignItems: "center", padding: spacing.md },
   reportText: { ...typography.caption, color: colors.subtext },
 });

@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { Text } from "react-native";
+import { useMyBuddyRequests, useMyUserId } from "@/features/matching/hooks";
 import { colors } from "@/theme/tokens";
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
@@ -7,6 +8,12 @@ function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
 }
 
 export default function TabsLayout() {
+  // 받은 요청 중 대기 중인 것 → 버디 탭 배지
+  const myId = useMyUserId();
+  const { data: requests } = useMyBuddyRequests();
+  const pendingCount =
+    requests?.filter((r) => r.addresseeId === myId && r.status === "pending").length ?? 0;
+
   return (
     <Tabs
       screenOptions={{
@@ -38,6 +45,8 @@ export default function TabsLayout() {
         options={{
           title: "버디",
           tabBarIcon: ({ focused }) => <TabIcon emoji="🤝" focused={focused} />,
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.danger, color: colors.text },
         }}
       />
       <Tabs.Screen

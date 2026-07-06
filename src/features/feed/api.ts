@@ -2,7 +2,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { supabase } from "@/lib/supabase";
 import type { Coords } from "@/stores/location";
 import type { NewPost, Post } from "./types";
-import { addMockPost, getMockPosts } from "./mock";
+import { addMockPost, deleteMockPost, getMockPosts, toggleMockHelpful } from "./mock";
 
 const RADIUS_M = 5000;
 
@@ -30,7 +30,43 @@ export async function fetchNearbyPosts(coords: Coords): Promise<Post[]> {
     distanceM: row.distance_m,
     createdAt: row.created_at,
     expiresAt: row.expires_at,
+    helpfulCount: Number(row.helpful_count ?? 0),
+    iHelped: !!row.i_helped,
   }));
+}
+
+/** "도움됐어요" 토글 */
+export async function toggleHelpful(postId: string, currentlyHelped: boolean): Promise<void> {
+  if (!supabase) {
+    toggleMockHelpful(postId);
+    return;
+  }
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) throw new Error("로그인이 필요해요.");
+
+  if (currentlyHelped) {
+    const { error } = await supabase
+      .from("post_reactions")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase
+      .from("post_reactions")
+      .insert({ post_id: postId, user_id: userId });
+    if (error) throw new Error(error.message);
+  }
+}
+
+/** 내 포스트 삭제 (RLS가 본인 것만 허용) */
+export async function deletePost(postId: string): Promise<void> {
+  if (!supabase) {
+    deleteMockPost(postId);
+    return;
+  }
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  if (error) throw new Error(error.message);
 }
 
 /** 사진을 리사이즈(긴 변 1600px, JPEG) 후 Supabase Storage에 업로드하고 공개 URL을 반환 */
