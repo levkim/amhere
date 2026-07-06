@@ -1,14 +1,5 @@
-import { useState } from "react";
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
@@ -16,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useMyContacts } from "@/features/safety/contacts";
+import { usePlacePicker } from "@/features/places/store";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
 
 const DURATIONS = [2, 4, 6, 8, 10, 12] as const;
@@ -40,6 +32,16 @@ export default function CheckIn() {
 
   const start = useSafetyStore((s) => s.start);
   const { data: contacts } = useMyContacts();
+
+  // 장소 선택 화면에서 고른 장소를 반영 (인스타그램식 위치 추가)
+  const pickedPlace = usePlacePicker((s) => s.picked);
+  const setPickedPlace = usePlacePicker((s) => s.setPicked);
+  useEffect(() => {
+    if (pickedPlace) {
+      setLocationName(pickedPlace.name);
+      setPickedPlace(null); // 반영 후 비워서 재적용 방지
+    }
+  }, [pickedPlace, setPickedPlace]);
 
   // 연락처가 하나뿐이면 자동 선택
   const effectiveContactId =
@@ -105,13 +107,24 @@ export default function CheckIn() {
     <Screen>
       <ScrollView keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionTitle}>어디에서 하시나요?</Text>
-        <TextInput
-          style={styles.input}
-          value={locationName}
-          onChangeText={setLocationName}
-          placeholder="예) 용평리조트 레인보우 / 발왕산 등산로"
-          placeholderTextColor={colors.subtext}
-        />
+        <Pressable
+          onPress={() => router.push("/safety/pick-location")}
+          style={({ pressed }) => [styles.locationRow, pressed && styles.locationRowPressed]}
+        >
+          <Text style={styles.locationPin}>📍</Text>
+          {locationName ? (
+            <Text style={styles.locationValue}>{locationName}</Text>
+          ) : (
+            <Text style={styles.locationPlaceholder}>위치 추가</Text>
+          )}
+          {locationName ? (
+            <Pressable onPress={() => setLocationName("")} hitSlop={10}>
+              <Text style={styles.locationClear}>✕</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.locationChevron}>›</Text>
+          )}
+        </Pressable>
 
         <Text style={styles.sectionTitle}>어떤 활동인가요?</Text>
         <View style={styles.options}>
@@ -234,16 +247,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.sm + 4,
   },
-  input: {
-    ...typography.body,
-    fontSize: 16,
-    color: colors.text,
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
   },
+  locationRowPressed: { backgroundColor: colors.surfaceHigh },
+  locationPin: { fontSize: 18 },
+  locationValue: { ...typography.body, fontSize: 16, color: colors.text, flex: 1 },
+  locationPlaceholder: { ...typography.body, fontSize: 16, color: colors.subtext, flex: 1 },
+  locationChevron: { ...typography.title, color: colors.subtext },
+  locationClear: { ...typography.body, color: colors.subtext, paddingHorizontal: spacing.xs },
   options: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   option: {
     backgroundColor: colors.surface,

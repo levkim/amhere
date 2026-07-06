@@ -54,6 +54,10 @@ export default function RootLayout() {
           />
           <Stack.Screen name="safety/contacts" options={{ title: "비상연락처" }} />
           <Stack.Screen
+            name="safety/pick-location"
+            options={{ title: "위치 추가", presentation: "modal" }}
+          />
+          <Stack.Screen
             name="safety/report"
             options={{ title: "신고/차단", presentation: "modal" }}
           />
