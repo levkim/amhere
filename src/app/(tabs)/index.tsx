@@ -78,20 +78,31 @@ export default function MapHome() {
           {activeCheckIn ? (
             <>
               <Text style={styles.safetyTitle}>
-                🟢 {ACTIVITY_LABELS[activeCheckIn.activity]} 활동 중
+                🟢 {activeCheckIn.locationName ? `${activeCheckIn.locationName} · ` : ""}
+                {ACTIVITY_LABELS[activeCheckIn.activity]} 활동 중
               </Text>
               <Text style={styles.safetyDesc}>
                 {new Date(activeCheckIn.expectedEndAt).toLocaleTimeString("ko-KR", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-                까지 체크아웃하지 않으면 알림이 발송돼요.
+                까지 체크아웃하지 않으면 알림이 발송돼요. 늦어질 것 같으면 연장하세요.
               </Text>
-              <Button
-                label="활동 종료 (체크아웃)"
-                variant="secondary"
-                onPress={() => useSafetyStore.getState().complete()}
-              />
+              <View style={styles.safetyActions}>
+                <View style={styles.safetyActionBtn}>
+                  <Button
+                    label="⏰ 1시간 연장"
+                    variant="secondary"
+                    onPress={() => useSafetyStore.getState().extend(1)}
+                  />
+                </View>
+                <View style={styles.safetyActionBtn}>
+                  <Button
+                    label="활동 종료"
+                    onPress={() => useSafetyStore.getState().complete()}
+                  />
+                </View>
+              </View>
             </>
           ) : (
             <>
@@ -142,6 +153,8 @@ const styles = StyleSheet.create({
   sheet: { flex: 1 },
   sheetContent: { padding: spacing.md, paddingBottom: spacing.xl },
   safetyCard: { marginBottom: spacing.lg, gap: spacing.sm },
+  safetyActions: { flexDirection: "row", gap: spacing.sm },
+  safetyActionBtn: { flex: 1 },
   safetyTitle: { ...typography.heading, color: colors.text },
   safetyDesc: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   sectionTitle: { ...typography.heading, color: colors.text, marginBottom: spacing.sm + 4 },

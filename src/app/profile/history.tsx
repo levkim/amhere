@@ -60,6 +60,24 @@ function RecordCard({ record }: { record: CheckInRecord }) {
   );
 }
 
+/** 이번 달 횟수 + 전체 완료 활동 누적 시간 */
+function summarize(records: CheckInRecord[]): { monthCount: number; totalHours: number } {
+  const now = new Date();
+  const monthCount = records.filter((r) => {
+    const d = new Date(r.startedAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+
+  const totalMins = records.reduce((sum, r) => {
+    if (!r.completedAt) return sum;
+    return (
+      sum + (new Date(r.completedAt).getTime() - new Date(r.startedAt).getTime()) / 60_000
+    );
+  }, 0);
+
+  return { monthCount, totalHours: Math.round(totalMins / 60) };
+}
+
 export default function ActivityHistory() {
   const { data: records, isLoading } = useMyCheckIns();
 
@@ -80,7 +98,20 @@ export default function ActivityHistory() {
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           records && records.length > 0 ? (
-            <Text style={styles.notice}>내 아웃도어 체크인 기록이에요. 나만 볼 수 있어요.</Text>
+            <>
+              <Card style={styles.statsCard}>
+                {(() => {
+                  const { monthCount, totalHours } = summarize(records);
+                  return (
+                    <Text style={styles.stats}>
+                      이번 달 <Text style={styles.statsStrong}>{monthCount}회</Text> · 누적{" "}
+                      <Text style={styles.statsStrong}>{totalHours}시간</Text> 활동 🏔️
+                    </Text>
+                  );
+                })()}
+              </Card>
+              <Text style={styles.notice}>내 아웃도어 체크인 기록이에요. 나만 볼 수 있어요.</Text>
+            </>
           ) : null
         }
         ListEmptyComponent={
@@ -98,6 +129,9 @@ export default function ActivityHistory() {
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
   list: { padding: spacing.md, paddingBottom: spacing.xl, flexGrow: 1 },
+  statsCard: { marginBottom: spacing.md, alignItems: "center" },
+  stats: { ...typography.heading, color: colors.text },
+  statsStrong: { color: colors.accent },
   notice: {
     ...typography.caption,
     color: colors.subtext,

@@ -2,13 +2,12 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
-import { Tag } from "@/components/ui/tag";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { HelpfulButton } from "@/components/post-card";
+import { HelpfulButton, isCheckinPost, PostTags } from "@/components/post-card";
 import { useDeletePost, useNearbyPosts } from "@/features/feed/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
-import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
+import { colors, spacing, typography } from "@/theme/tokens";
 
 export default function PostDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,15 +49,17 @@ export default function PostDetail() {
 
   return (
     <Screen>
-      <Card style={styles.card}>
+      <Card style={[styles.card, isCheckinPost(post) && styles.checkinCard]}>
+        {isCheckinPost(post) ? (
+          <View style={styles.checkinBadge}>
+            <Text style={styles.checkinBadgeText}>🏔️ 아웃도어 활동</Text>
+          </View>
+        ) : null}
         <Text style={styles.nickname}>{post.nickname}</Text>
         <Text style={styles.body}>{post.body}</Text>
         {post.imageUrl ? <Image source={{ uri: post.imageUrl }} style={styles.image} /> : null}
         <View style={styles.tags}>
-          {post.activity ? <Tag label={ACTIVITY_LABELS[post.activity]} tone="accent" /> : null}
-          {post.tags.map((t) => (
-            <Tag key={t} label={`#${t}`} />
-          ))}
+          <PostTags post={post} />
         </View>
         <Text style={styles.meta}>
           {new Date(post.createdAt).toLocaleString("ko-KR")} 작성 ·{" "}
@@ -77,6 +78,21 @@ export default function PostDetail() {
       {post.authorId === myId ? (
         <View style={styles.deleteBtn}>
           <Button label="포스트 삭제" variant="danger" onPress={confirmDelete} loading={deleting} />
+        </View>
+      ) : null}
+
+      {/* 동행구함 체크인 포스트 → 바로 버디 요청 */}
+      {post.authorId !== myId && post.tags.includes("동행구함") ? (
+        <View style={styles.buddyBtn}>
+          <Button
+            label={`🤝 ${post.nickname}님에게 버디 요청 보내기`}
+            onPress={() =>
+              router.push({
+                pathname: "/buddy/new",
+                params: { userId: post.authorId, nickname: post.nickname },
+              })
+            }
+          />
         </View>
       ) : null}
 
@@ -106,6 +122,20 @@ const styles = StyleSheet.create({
   tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
   meta: { ...typography.caption, color: colors.subtext },
   helpfulRow: { flexDirection: "row" },
+  checkinCard: {
+    borderColor: colors.accent,
+    borderWidth: 1.5,
+    backgroundColor: "rgba(52, 211, 153, 0.05)",
+  },
+  checkinBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(52, 211, 153, 0.15)",
+    borderRadius: 999,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
+  },
+  checkinBadgeText: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  buddyBtn: { marginTop: spacing.lg },
   deleteBtn: { marginTop: spacing.lg },
   reportLink: { marginTop: spacing.lg, alignItems: "center", padding: spacing.md },
   reportText: { ...typography.caption, color: colors.subtext },

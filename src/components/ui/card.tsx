@@ -1,10 +1,10 @@
 import { PropsWithChildren } from "react";
-import { Pressable, StyleSheet, ViewStyle } from "react-native";
+import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native";
 import { colors, radius, spacing } from "@/theme/tokens";
 
 type Props = PropsWithChildren<{
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }>;
 
 export function Card({ children, onPress, style }: Props) {

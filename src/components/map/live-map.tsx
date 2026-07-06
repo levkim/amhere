@@ -63,16 +63,22 @@ export function LiveMap({ center, posts, users }: Props) {
         </MarkerView>
       ))}
 
-      {/* 주변 포스트 */}
-      {posts.map((p) => (
-        <MarkerView key={`p-${p.id}`} coordinate={[p.lng, p.lat]} anchor={{ x: 0.5, y: 1 }}>
-          <View style={styles.postPin} onTouchEnd={() => router.push(`/post/${p.id}`)}>
-            <Text style={styles.postEmoji}>
-              {p.activity ? (ACTIVITY_EMOJI[p.activity] ?? "💬") : "💬"}
-            </Text>
-          </View>
-        </MarkerView>
-      ))}
+      {/* 주변 포스트 — 아웃도어 활동(체크인) 핀은 초록색으로 구분 */}
+      {posts.map((p) => {
+        const isCheckin = p.tags.includes("체크인");
+        return (
+          <MarkerView key={`p-${p.id}`} coordinate={[p.lng, p.lat]} anchor={{ x: 0.5, y: 1 }}>
+            <View
+              style={[styles.postPin, isCheckin && styles.checkinPin]}
+              onTouchEnd={() => router.push(`/post/${p.id}`)}
+            >
+              <Text style={styles.postEmoji}>
+                {p.activity ? (ACTIVITY_EMOJI[p.activity] ?? "💬") : "💬"}
+              </Text>
+            </View>
+          </MarkerView>
+        );
+      })}
     </MapView>
   );
 }
@@ -113,5 +119,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 5,
   },
+  checkinPin: { backgroundColor: colors.accent },
   postEmoji: { fontSize: 16 },
 });

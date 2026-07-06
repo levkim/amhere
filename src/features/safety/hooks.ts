@@ -29,6 +29,8 @@ type StartInput = {
 type SafetyState = {
   active: ActiveCheckIn | null;
   start: (input: StartInput) => Promise<void>;
+  /** 예상 종료 시간을 뒤로 미룬다 (하산 지연 등으로 오알림 방지) */
+  extend: (hours: number) => Promise<void>;
   complete: () => Promise<void>;
 };
 
@@ -94,6 +96,31 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         expectedEndAt: expectedEndAt.toISOString(),
         reminderNotifId,
       },
+    });
+  },
+
+  extend: async (hours) => {
+    const active = get().active;
+    if (!active) return;
+
+    const newEnd = new Date(new Date(active.expectedEndAt).getTime() + hours * 3_600_000);
+
+    if (supabase && !active.id.startsWith("local-")) {
+      const { error } = await supabase
+        .from("check_ins")
+        .update({ expected_end_at: newEnd.toISOString() })
+        .eq("id", active.id);
+      if (error) throw new Error(error.message);
+    }
+
+    // 리마인더도 새 종료 시간 기준으로 다시 예약
+    if (active.reminderNotifId) {
+      Notifications.cancelScheduledNotificationAsync(active.reminderNotifId).catch(() => {});
+    }
+    const reminderNotifId = await scheduleReminder(newEnd);
+
+    set({
+      active: { ...active, expectedEndAt: newEnd.toISOString(), reminderNotifId },
     });
   },
 

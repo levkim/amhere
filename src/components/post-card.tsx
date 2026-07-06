@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { useToggleHelpful } from "@/features/feed/hooks";
+import { useMyUserId } from "@/features/matching/hooks";
 import type { Post } from "@/features/feed/types";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography } from "@/theme/tokens";
 
@@ -14,6 +15,11 @@ function timeAgo(iso: string): string {
 
 function distanceLabel(m: number): string {
   return m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`;
+}
+
+/** 아웃도어 체크인으로 공유된 포스트인지 */
+export function isCheckinPost(post: Post): boolean {
+  return post.tags.includes("체크인");
 }
 
 export function HelpfulButton({ post }: { post: Post }) {
@@ -32,9 +38,46 @@ export function HelpfulButton({ post }: { post: Post }) {
   );
 }
 
-export function PostCard({ post }: { post: Post }) {
+/** 포스트 태그 줄 — #동행구함은 탭하면 바로 버디 요청으로 연결 */
+export function PostTags({ post }: { post: Post }) {
+  const myId = useMyUserId();
   return (
-    <Card onPress={() => router.push(`/post/${post.id}`)} style={styles.card}>
+    <>
+      {post.activity ? <Tag label={ACTIVITY_LABELS[post.activity]} tone="accent" /> : null}
+      {post.tags.map((t) =>
+        t === "동행구함" && post.authorId !== myId ? (
+          <Pressable
+            key={t}
+            onPress={() =>
+              router.push({
+                pathname: "/buddy/new",
+                params: { userId: post.authorId, nickname: post.nickname },
+              })
+            }
+            hitSlop={6}
+          >
+            <Tag label={`🤝 #${t} → 요청`} tone="accent" />
+          </Pressable>
+        ) : (
+          <Tag key={t} label={`#${t}`} />
+        ),
+      )}
+    </>
+  );
+}
+
+export function PostCard({ post }: { post: Post }) {
+  const checkin = isCheckinPost(post);
+  return (
+    <Card
+      onPress={() => router.push(`/post/${post.id}`)}
+      style={[styles.card, checkin && styles.checkinCard]}
+    >
+      {checkin ? (
+        <View style={styles.checkinBadge}>
+          <Text style={styles.checkinBadgeText}>🏔️ 아웃도어 활동</Text>
+        </View>
+      ) : null}
       <View style={styles.header}>
         <Text style={styles.nickname}>{post.nickname}</Text>
         <Text style={styles.meta}>
@@ -45,10 +88,7 @@ export function PostCard({ post }: { post: Post }) {
       {post.imageUrl ? <Image source={{ uri: post.imageUrl }} style={styles.image} /> : null}
       <View style={styles.footer}>
         <View style={styles.tags}>
-          {post.activity ? <Tag label={ACTIVITY_LABELS[post.activity]} tone="accent" /> : null}
-          {post.tags.map((t) => (
-            <Tag key={t} label={`#${t}`} />
-          ))}
+          <PostTags post={post} />
         </View>
         <HelpfulButton post={post} />
       </View>
@@ -58,6 +98,21 @@ export function PostCard({ post }: { post: Post }) {
 
 const styles = StyleSheet.create({
   card: { marginBottom: spacing.sm + 4 },
+  // 아웃도어 활동(체크인) 포스트는 초록 테두리로 구분
+  checkinCard: {
+    borderColor: colors.accent,
+    borderWidth: 1.5,
+    backgroundColor: "rgba(52, 211, 153, 0.05)",
+  },
+  checkinBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(52, 211, 153, 0.15)",
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 3,
+    marginBottom: spacing.sm,
+  },
+  checkinBadgeText: { ...typography.caption, color: colors.accent, fontWeight: "600" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

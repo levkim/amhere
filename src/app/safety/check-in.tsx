@@ -41,7 +41,7 @@ export default function CheckIn() {
   const [showIosPicker, setShowIosPicker] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [myTags, setMyTags] = useState<string[]>([]);
-  const [shareToFeed, setShareToFeed] = useState(false); // 기본 꺼짐 (안전 원칙)
+  const [shareToFeed, setShareToFeed] = useState(true); // 기본 켜짐 — 시작 소식이 피드·'지금 주변에서'에 공유됨 (끄기 가능)
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
