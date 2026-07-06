@@ -97,9 +97,13 @@ export default function MapHome() {
             <>
               <Text style={styles.safetyTitle}>🛡️ 혼자 나가시나요?</Text>
               <Text style={styles.safetyDesc}>
-                안전 체크인을 켜면 제시간에 돌아오지 않을 때 자동으로 알림을 보내드려요.
+                아웃도어 체크인을 시작하면 제시간에 돌아오지 않을때 자동으로 본인 및 등록한
+                가족,버디에게 알람을 보내드려요
               </Text>
-              <Button label="안전 체크인 시작" onPress={() => router.push("/safety/check-in")} />
+              <Button
+                label="아웃도어 체크인 시작"
+                onPress={() => router.push("/safety/check-in")}
+              />
             </>
           )}
         </Card>
