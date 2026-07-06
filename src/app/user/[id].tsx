@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUserProfile } from "@/features/profile/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
+import { Avatar, SnsRow } from "@/components/profile-bits";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
 // 버디 요청 전 상대 프로필 상세 보기
@@ -34,9 +35,10 @@ export default function UserProfile() {
   return (
     <Screen>
       <Card style={styles.card}>
-        <Text style={styles.avatar}>⛰️</Text>
+        <Avatar url={profile.avatarUrl} size={72} />
         <Text style={styles.name}>{profile.nickname}</Text>
         {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+        <SnsRow sns={profile.sns} />
         <View style={styles.badges}>
           <Tag label={`Lv.${profile.level}`} tone="accent" />
           {profile.activities.map((a) => (
@@ -65,7 +67,6 @@ export default function UserProfile() {
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
   card: { marginTop: spacing.md, gap: spacing.sm },
-  avatar: { fontSize: 48 },
   name: { ...typography.title, color: colors.text },
   bio: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },

@@ -7,6 +7,7 @@ import { Tag } from "@/components/ui/tag";
 import { isDemoMode } from "@/lib/supabase";
 import { useSessionStore } from "@/stores/session";
 import { useMyProfile } from "@/features/profile/hooks";
+import { Avatar, SnsRow } from "@/components/profile-bits";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
 export default function Profile() {
@@ -16,9 +17,10 @@ export default function Profile() {
   return (
     <Screen>
       <Card style={styles.card}>
-        <Text style={styles.avatar}>⛷️</Text>
+        <Avatar url={profile?.avatarUrl ?? null} size={72} />
         <Text style={styles.name}>{profile?.nickname ?? "..."}</Text>
         {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
+        <SnsRow sns={profile?.sns ?? {}} />
         <View style={styles.badges}>
           <Tag label={`Lv.${profile?.level ?? 1}`} tone="accent" />
           {(profile?.activities ?? []).map((a) => (
@@ -56,7 +58,6 @@ export default function Profile() {
 
 const styles = StyleSheet.create({
   card: { marginTop: spacing.md, gap: spacing.sm },
-  avatar: { fontSize: 48 },
   name: { ...typography.title, color: colors.text },
   bio: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
