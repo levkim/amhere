@@ -37,6 +37,9 @@ yarn-error.*
 # EAS build config contains Mapbox download token — keep local
 eas.json
 
+# Firebase 비공개 키 (푸시 발송 허가증) — 절대 커밋 금지
+firebase-service-account.json
+
 # typescript
 *.tsbuildinfo
 

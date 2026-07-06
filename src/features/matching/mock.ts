@@ -46,30 +46,34 @@ export function setMockRequestStatus(id: string, status: BuddyStatus): void {
   requests = requests.map((r) => (r.id === id ? { ...r, status } : r));
 }
 
+// 데모 좌표: 용평리조트 주변에 가상 위치를 흩어 배치
 export const MOCK_NEARBY_USERS: NearbyUser[] = [
   {
     userId: "u1",
     nickname: "파우더준호",
     activity: "ski",
     level: 3,
-    distanceM: 420,
-    isApproximate: true,
+    lat: 37.648,
+    lng: 128.688,
+    isFriend: true,
   },
   {
     userId: "u2",
     nickname: "산타는수진",
     activity: "hiking",
     level: 2,
-    distanceM: 1350,
-    isApproximate: true,
+    lat: 37.62,
+    lng: 128.66,
+    isFriend: false,
   },
   {
     userId: "u3",
     nickname: "크루민재",
     activity: "backcountry",
     level: 5,
-    distanceM: 890,
-    isApproximate: true,
+    lat: 37.66,
+    lng: 128.7,
+    isFriend: false,
   },
 ];
 

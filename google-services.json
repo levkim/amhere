@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "511373330545",
+    "project_id": "amhere-ef6d7",
+    "storage_bucket": "amhere-ef6d7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511373330545:android:c91386c96c8c49671933d0",
+        "android_client_info": {
+          "package_name": "com.amhere.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYrd16RiDAXrS_9gZ656zmSsC7IVMoAos"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

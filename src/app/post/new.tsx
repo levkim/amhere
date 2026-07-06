@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Button } from "@/components/ui/button";
@@ -14,15 +24,31 @@ export default function NewPost() {
   const [body, setBody] = useState("");
   const [activity, setActivity] = useState<Activity>("ski");
   const [tags, setTags] = useState<string[]>([]);
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const coords = useEffectiveCoords();
   const { mutateAsync, isPending } = useCreatePost();
 
   const toggleTag = (tag: string) =>
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.9,
+    });
+    if (!result.canceled && result.assets[0]) setImageUri(result.assets[0].uri);
+  };
+
   const submit = async () => {
     try {
-      await mutateAsync({ body: body.trim(), tags, activity, lat: coords.lat, lng: coords.lng });
+      await mutateAsync({
+        body: body.trim(),
+        tags,
+        activity,
+        lat: coords.lat,
+        lng: coords.lng,
+        imageUri,
+      });
       router.back();
     } catch (e) {
       Alert.alert("작성 실패", e instanceof Error ? e.message : "다시 시도해 주세요.");
@@ -76,6 +102,20 @@ export default function NewPost() {
             </Pressable>
           ))}
         </View>
+
+        <Text style={styles.label}>사진 (선택)</Text>
+        {imageUri ? (
+          <View>
+            <Image source={{ uri: imageUri }} style={styles.preview} />
+            <Pressable onPress={() => setImageUri(null)} style={styles.removePhoto}>
+              <Text style={styles.removePhotoText}>사진 지우기</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={pickImage} style={styles.photoButton}>
+            <Text style={styles.photoButtonText}>📷 사진 추가</Text>
+          </Pressable>
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -122,5 +162,18 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { ...typography.body, color: colors.subtext },
   chipTextActive: { color: colors.text, fontWeight: "600" },
+  photoButton: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    padding: spacing.lg,
+    alignItems: "center",
+  },
+  photoButtonText: { ...typography.body, color: colors.subtext },
+  preview: { width: "100%", height: 200, borderRadius: radius.md },
+  removePhoto: { alignItems: "center", padding: spacing.sm },
+  removePhotoText: { ...typography.caption, color: colors.danger },
   footer: { paddingVertical: spacing.md },
 });

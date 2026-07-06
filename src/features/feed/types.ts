@@ -22,4 +22,6 @@ export type NewPost = {
   activity: Activity;
   lat: number;
   lng: number;
+  /** 폰에서 고른 사진의 로컬 경로 (업로드 전) */
+  imageUri?: string | null;
 };

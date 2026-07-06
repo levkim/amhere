@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { Stack } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
+import { usePushRegistration } from "@/features/notifications/use-push-registration";
 import { useIsSignedIn, useSessionStore } from "@/stores/session";
 import { colors } from "@/theme/tokens";
 
@@ -14,6 +15,8 @@ export default function RootLayout() {
   useEffect(() => {
     init();
   }, [init]);
+
+  usePushRegistration(); // 로그인 시 이 기기를 알림 수신 대상으로 등록
 
   if (!initialized) return null; // 스플래시 유지
 
@@ -41,8 +44,16 @@ export default function RootLayout() {
           />
           <Stack.Screen name="chat/[requestId]" options={{ title: "채팅" }} />
           <Stack.Screen
+            name="profile/edit"
+            options={{ title: "프로필 편집", presentation: "modal" }}
+          />
+          <Stack.Screen
             name="safety/check-in"
             options={{ title: "안전 체크인", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="safety/report"
+            options={{ title: "신고/차단", presentation: "modal" }}
           />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>

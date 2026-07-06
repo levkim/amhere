@@ -21,8 +21,11 @@ export type NearbyUser = {
   nickname: string;
   activity: Activity | null;
   level: number;
-  distanceM: number | null;
-  isApproximate: boolean;
+  /** 서버에서 가상화된 위치 (친구·20km 이내면 500m, 아니면 10km 반경 내 가상 좌표) */
+  lat: number;
+  lng: number;
+  /** 친구이면서 20km 이내 → 더 정확한 500m 표시 */
+  isFriend: boolean;
 };
 
 export type NewBuddyRequest = {

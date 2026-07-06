@@ -63,18 +63,20 @@ export function addMockPost(input: {
   activity: Post["activity"];
   lat: number;
   lng: number;
+  imageUri?: string | null;
 }): void {
+  const { imageUri, ...rest } = input;
   posts = [
     {
       id: `mock-${Date.now()}`,
       authorId: "me",
       nickname: "나",
       avatarUrl: null,
-      imageUrl: null,
+      imageUrl: imageUri ?? null, // 데모: 로컬 사진 경로 그대로 표시
       distanceM: 0,
       createdAt: new Date().toISOString(),
       expiresAt: hoursLater(24),
-      ...input,
+      ...rest,
     },
     ...posts,
   ];

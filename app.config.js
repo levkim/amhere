@@ -1,6 +1,13 @@
 // app.config.js — app.json을 JS로 바꿔 환경변수(Mapbox 다운로드 토큰)를 읽게 한다.
 // 빌드 시 process.env.MAPBOX_DOWNLOAD_TOKEN 값을 @rnmapbox/maps 플러그인에 전달한다.
 
+const { existsSync } = require("fs");
+
+// Firebase 설정 파일(푸시 알림용)이 있으면 포함 — 없어도 앱은 정상 동작
+const googleServices = existsSync("./google-services.json")
+  ? { googleServicesFile: "./google-services.json" }
+  : {};
+
 export default {
   expo: {
     name: "Amhere",
@@ -19,6 +26,7 @@ export default {
     },
     android: {
       package: "com.amhere.app",
+      ...googleServices,
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -51,6 +59,12 @@ export default {
         },
       ],
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "포스트에 첨부할 사진을 선택하기 위해 사진 접근 권한이 필요합니다.",
+        },
+      ],
       [
         "@rnmapbox/maps",
         {

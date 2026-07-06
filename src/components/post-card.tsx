@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -25,6 +25,7 @@ export function PostCard({ post }: { post: Post }) {
         </Text>
       </View>
       <Text style={styles.body}>{post.body}</Text>
+      {post.imageUrl ? <Image source={{ uri: post.imageUrl }} style={styles.image} /> : null}
       <View style={styles.tags}>
         {post.activity ? <Tag label={ACTIVITY_LABELS[post.activity]} tone="accent" /> : null}
         {post.tags.map((t) => (
@@ -46,5 +47,6 @@ const styles = StyleSheet.create({
   nickname: { ...typography.heading, color: colors.text },
   meta: { ...typography.caption, color: colors.subtext },
   body: { ...typography.body, color: colors.text, lineHeight: 22 },
+  image: { width: "100%", height: 180, borderRadius: 12, marginTop: spacing.sm + 4 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2, marginTop: spacing.sm + 4 },
 });

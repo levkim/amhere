@@ -9,11 +9,6 @@ import { useNearbyUsers } from "@/features/matching/hooks";
 import type { NearbyUser } from "@/features/matching/types";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
-function distanceLabel(m: number | null): string {
-  if (m === null) return "";
-  return m < 1000 ? `약 ${Math.round(m / 100) * 100}m` : `약 ${(m / 1000).toFixed(1)}km`;
-}
-
 function UserCard({ user }: { user: NearbyUser }) {
   return (
     <Card style={styles.card}>
@@ -21,12 +16,11 @@ function UserCard({ user }: { user: NearbyUser }) {
         <View style={styles.info}>
           <Text style={styles.nickname}>{user.nickname}</Text>
           <Text style={styles.meta}>
-            {user.activity ? `${ACTIVITY_LABELS[user.activity]} · ` : ""}
-            {distanceLabel(user.distanceM)}
-            {user.isApproximate ? " (대략 위치)" : ""}
+            {user.activity ? `${ACTIVITY_LABELS[user.activity]}` : "아웃도어"}
+            {user.isFriend ? " · 친구 (근처)" : " · 대략 위치"}
           </Text>
         </View>
-        <Tag label={`Lv.${user.level}`} tone="accent" />
+        <Tag label={`Lv.${user.level}`} tone={user.isFriend ? "accent" : "default"} />
       </View>
       <Button
         label="버디 요청 보내기"
@@ -54,7 +48,8 @@ export default function FindBuddy() {
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <Text style={styles.notice}>
-            지금 주변에서 활동 중인 사람들이에요. 정확한 위치는 매칭이 성사된 후에만 공개돼요.
+            지금 활동 중인 사람들이에요. 위치는 반경 10km 안의 대략치로만 표시되고, 친구가 되면
+            20km 이내일 때 500m로 더 정확히 보여요.
           </Text>
         }
         ListEmptyComponent={

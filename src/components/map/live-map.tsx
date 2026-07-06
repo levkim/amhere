@@ -50,14 +50,10 @@ export function LiveMap({ center, posts, users }: Props) {
         </View>
       </MarkerView>
 
-      {/* 주변 사용자 */}
+      {/* 주변 사용자 — 좌표는 서버에서 이미 가상화됨. 친구는 강조 표시 */}
       {users.map((u) => (
-        <MarkerView
-          key={`u-${u.userId}`}
-          coordinate={userCoord(u, center)}
-          anchor={{ x: 0.5, y: 1 }}
-        >
-          <View style={styles.userPin}>
+        <MarkerView key={`u-${u.userId}`} coordinate={[u.lng, u.lat]} anchor={{ x: 0.5, y: 1 }}>
+          <View style={[styles.userPin, u.isFriend && styles.friendPin]}>
             <Text style={styles.userEmoji}>
               {u.activity ? (ACTIVITY_EMOJI[u.activity] ?? "📍") : "📍"}
             </Text>
@@ -77,14 +73,6 @@ export function LiveMap({ center, posts, users }: Props) {
       ))}
     </MapView>
   );
-}
-
-// nearby_users는 프라이버시상 거리만 주고 좌표는 대략치이므로, 중심 주변에 흩어 배치
-function userCoord(u: NearbyUser, center: Coords): [number, number] {
-  const seed = u.userId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const angle = (seed % 360) * (Math.PI / 180);
-  const dist = ((u.distanceM ?? 500) / 111_000) * 0.9; // 도 단위 근사
-  return [center.lng + Math.cos(angle) * dist, center.lat + Math.sin(angle) * dist];
 }
 
 const styles = StyleSheet.create({
@@ -113,6 +101,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 4,
   },
+  friendPin: { borderColor: colors.accent, borderWidth: 3 },
   userEmoji: { fontSize: 16 },
   postPin: {
     backgroundColor: colors.primary,
