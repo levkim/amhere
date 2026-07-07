@@ -20,6 +20,10 @@ export type Post = {
   iHelped: boolean;
   /** 공개 범위 */
   visibility: PostVisibility;
+  /** 연결된 아웃도어 체크인 (참가신청 대상). 없으면 null */
+  checkInId: string | null;
+  /** 수락된 참가자 수 */
+  joinedCount: number;
 };
 
 /** 공개 범위: 전체 공개 / 친구에게만 (비공개는 포스트 자체를 안 만듦) */
@@ -35,4 +39,6 @@ export type NewPost = {
   imageUri?: string | null;
   /** 공개 범위 (기본 전체 공개) */
   visibility?: PostVisibility;
+  /** 연결할 체크인 id (참가신청 대상) */
+  checkInId?: string | null;
 };

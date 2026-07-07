@@ -30,6 +30,7 @@ type StartInput = {
   scheduledStartAt: Date;
   expectedEndAt: Date;
   contactId: string | null;
+  guardianIds: string[]; // 임시 지킴이(버디) user_id들
 };
 
 type SafetyState = {
@@ -118,7 +119,16 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
     });
   },
 
-  start: async ({ activity, title, locationName, tags, scheduledStartAt, expectedEndAt, contactId }) => {
+  start: async ({
+    activity,
+    title,
+    locationName,
+    tags,
+    scheduledStartAt,
+    expectedEndAt,
+    contactId,
+    guardianIds,
+  }) => {
     const isImmediate = scheduledStartAt.getTime() <= Date.now() + 60_000; // 1분 이내면 바로시작
     const state: CheckInState = isImmediate ? "active" : "scheduled";
 
@@ -135,6 +145,7 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
             location_name: locationName,
             tags,
             contact_id: contactId,
+            guardian_ids: guardianIds,
             scheduled_start_at: scheduledStartAt.toISOString(),
             expected_end_at: expectedEndAt.toISOString(),
             status: state,
@@ -143,6 +154,13 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
           .single();
         if (error) throw new Error(error.message);
         id = data.id;
+
+        // 지킴이에게 "지정됨" 알림 (실패해도 체크인은 유지)
+        if (guardianIds.length > 0) {
+          supabase.rpc("notify_guardians", { cid: id }).then(({ error: e }) => {
+            if (e) console.warn("notify_guardians failed:", e.message);
+          });
+        }
       }
     }
 

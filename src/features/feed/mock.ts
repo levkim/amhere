@@ -22,6 +22,8 @@ const INITIAL_POSTS: Post[] = [
     helpfulCount: 5,
     iHelped: false,
     visibility: "public",
+    checkInId: null,
+    joinedCount: 0,
   },
   {
     id: "mock-2",
@@ -40,6 +42,8 @@ const INITIAL_POSTS: Post[] = [
     helpfulCount: 12,
     iHelped: true,
     visibility: "public",
+    checkInId: null,
+    joinedCount: 0,
   },
   {
     id: "mock-3",
@@ -58,6 +62,8 @@ const INITIAL_POSTS: Post[] = [
     helpfulCount: 2,
     iHelped: false,
     visibility: "public",
+    checkInId: null,
+    joinedCount: 0,
   },
 ];
 
@@ -89,6 +95,8 @@ export function addMockPost(input: {
       helpfulCount: 0,
       iHelped: false,
       visibility: visibility ?? "public",
+      checkInId: null,
+      joinedCount: 0,
       ...rest,
     },
     ...posts,

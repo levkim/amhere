@@ -51,6 +51,8 @@ export default function RootLayout() {
             options={{ title: "버디 요청", presentation: "modal" }}
           />
           <Stack.Screen name="chat/[requestId]" options={{ title: "채팅" }} />
+          <Stack.Screen name="activity/[id]/participants" options={{ title: "참가신청 관리" }} />
+          <Stack.Screen name="activity/[id]/chat" options={{ title: "단체 채팅" }} />
           <Stack.Screen name="user/[id]" options={{ title: "프로필" }} />
           <Stack.Screen
             name="profile/edit"

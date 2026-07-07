@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useMyContacts } from "@/features/safety/contacts";
+import { useMyBuddies } from "@/features/activity/hooks";
 import { usePlacePicker } from "@/features/places/store";
 import { CHECKIN_TAGS } from "@/features/safety/tags";
 import { useCreatePost } from "@/features/feed/hooks";
@@ -71,6 +72,7 @@ export default function CheckIn() {
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
   const [showIosPicker, setShowIosPicker] = useState<"start" | "end" | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [guardianIds, setGuardianIds] = useState<string[]>([]);
   const [myTags, setMyTags] = useState<string[]>([]);
   // 즉시 시작은 전체 공개, 예약(미래)은 안전을 위해 친구에게만이 기본값
   const [shareScope, setShareScope] = useState<ShareScope>("public");
@@ -78,6 +80,7 @@ export default function CheckIn() {
 
   const start = useSafetyStore((s) => s.start);
   const { data: contacts } = useMyContacts();
+  const { data: buddies } = useMyBuddies();
   const { mutateAsync: createPost } = useCreatePost();
   const coords = useEffectiveCoords();
 
@@ -177,10 +180,12 @@ export default function CheckIn() {
         scheduledStartAt,
         expectedEndAt,
         contactId: effectiveContactId,
+        guardianIds,
       });
 
       if (effectiveScope !== "private") {
         try {
+          const checkInId = useSafetyStore.getState().active?.id;
           const what = title.trim() ? ` · ${title.trim()}` : "";
           const body = isScheduled
             ? `⏱ ${formatDateTime(scheduledStartAt)} ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 예정!${what}`
@@ -192,6 +197,8 @@ export default function CheckIn() {
             lat: coords.lat,
             lng: coords.lng,
             visibility: effectiveScope,
+            // 실제 체크인 id일 때만 연결 (참가신청 대상)
+            checkInId: checkInId && !checkInId.startsWith("local-") ? checkInId : null,
           });
         } catch (e) {
           console.warn("share-to-feed failed:", e);
@@ -399,6 +406,38 @@ export default function CheckIn() {
               onPress={() => router.push("/safety/contacts")}
             />
           </Card>
+        )}
+
+        <Text style={styles.sectionTitle}>임시 비상연락 추가 (이번 활동만)</Text>
+        <Text style={styles.tagHint}>
+          버디를 안전 지킴이로 지정하면, 늦어질 때 그 버디에게도 알림이 가요. 시작할 때 지킴이에게
+          &lsquo;지정됐어요&rsquo; 알림이 전송됩니다.
+        </Text>
+        {buddies && buddies.length > 0 ? (
+          <View style={styles.options}>
+            {buddies.map((b) => {
+              const on = guardianIds.includes(b.userId);
+              return (
+                <Pressable
+                  key={b.userId}
+                  onPress={() =>
+                    setGuardianIds((prev) =>
+                      on ? prev.filter((x) => x !== b.userId) : [...prev, b.userId],
+                    )
+                  }
+                  style={[styles.option, on && styles.optionActive]}
+                >
+                  <Text style={[styles.optionText, on && styles.optionTextActive]}>
+                    🛡️ {b.nickname}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.tagHint}>
+            아직 버디가 없어요. 버디를 맺으면 여기서 지킴이로 지정할 수 있어요.
+          </Text>
         )}
 
         <Text style={styles.sectionTitle}>공개 범위</Text>

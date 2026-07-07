@@ -7,6 +7,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { HelpfulButton, isCheckinPost, PostTags } from "@/components/post-card";
 import { useDeletePost, useNearbyPosts } from "@/features/feed/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
+import {
+  useApplyToActivity,
+  useCancelApplication,
+  useParticipants,
+} from "@/features/activity/hooks";
 import { colors, spacing, typography } from "@/theme/tokens";
 
 export default function PostDetail() {
@@ -15,6 +20,13 @@ export default function PostDetail() {
   const myId = useMyUserId();
   const { mutateAsync: removePost, isPending: deleting } = useDeletePost();
   const post = posts?.find((p) => p.id === id);
+
+  // 참가신청 (동행구함 + 체크인 연결된 포스트만)
+  const checkInId = post?.checkInId ?? "";
+  const { data: participants } = useParticipants(checkInId);
+  const { mutateAsync: apply, isPending: applying } = useApplyToActivity();
+  const { mutateAsync: cancelApply } = useCancelApplication();
+  const myParticipation = participants?.find((p) => p.userId === myId);
 
   const confirmDelete = () => {
     if (!post) return;
@@ -81,8 +93,55 @@ export default function PostDetail() {
         </View>
       ) : null}
 
-      {/* 동행구함 체크인 포스트 → 바로 버디 요청 */}
-      {post.authorId !== myId && post.tags.includes("동행구함") ? (
+      {/* 동행구함 + 체크인 연결 → 참가신청 / 관리 / 단체 채팅 */}
+      {post.checkInId && post.tags.includes("동행구함") ? (
+        <View style={styles.joinBox}>
+          <Text style={styles.joinCount}>🙋 참가 확정 {post.joinedCount}명</Text>
+
+          {post.authorId === myId ? (
+            <>
+              <Button
+                label="참가신청 관리"
+                onPress={() => router.push(`/activity/${post.checkInId}/participants`)}
+              />
+              <Button
+                label="💬 단체 채팅 열기"
+                variant="secondary"
+                onPress={() => router.push(`/activity/${post.checkInId}/chat`)}
+              />
+            </>
+          ) : myParticipation?.status === "accepted" ? (
+            <Button
+              label="💬 단체 채팅 열기"
+              onPress={() => router.push(`/activity/${post.checkInId}/chat`)}
+            />
+          ) : myParticipation?.status === "pending" ? (
+            <>
+              <Text style={styles.joinNote}>승인 대기 중이에요.</Text>
+              <Button
+                label="신청 취소"
+                variant="secondary"
+                onPress={() => cancelApply(checkInId)}
+              />
+            </>
+          ) : myParticipation?.status === "declined" ? (
+            <Text style={styles.joinNote}>참가가 거절되었어요.</Text>
+          ) : (
+            <Button
+              label="🙋 참가신청"
+              onPress={async () => {
+                try {
+                  await apply(checkInId);
+                } catch (e) {
+                  Alert.alert("신청 실패", e instanceof Error ? e.message : "다시 시도해 주세요.");
+                }
+              }}
+              loading={applying}
+            />
+          )}
+        </View>
+      ) : post.authorId !== myId && post.tags.includes("동행구함") ? (
+        // 체크인 연결이 없는 예전 동행구함 글은 기존 버디 요청으로
         <View style={styles.buddyBtn}>
           <Button
             label={`🤝 ${post.nickname}님에게 버디 요청 보내기`}
@@ -136,6 +195,9 @@ const styles = StyleSheet.create({
   },
   checkinBadgeText: { ...typography.caption, color: colors.accent, fontWeight: "600" },
   buddyBtn: { marginTop: spacing.lg },
+  joinBox: { marginTop: spacing.lg, gap: spacing.sm },
+  joinCount: { ...typography.body, color: colors.accent, fontWeight: "600" },
+  joinNote: { ...typography.caption, color: colors.subtext, textAlign: "center" },
   deleteBtn: { marginTop: spacing.lg },
   reportLink: { marginTop: spacing.lg, alignItems: "center", padding: spacing.md },
   reportText: { ...typography.caption, color: colors.subtext },

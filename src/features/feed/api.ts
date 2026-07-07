@@ -33,6 +33,8 @@ export async function fetchNearbyPosts(coords: Coords): Promise<Post[]> {
     helpfulCount: Number(row.helpful_count ?? 0),
     iHelped: !!row.i_helped,
     visibility: row.visibility === "friends" ? "friends" : "public",
+    checkInId: row.check_in_id ?? null,
+    joinedCount: Number(row.joined_count ?? 0),
   }));
 }
 
@@ -109,6 +111,7 @@ export async function createPost(post: NewPost): Promise<void> {
     activity: post.activity,
     image_url: imageUrl,
     visibility: post.visibility ?? "public",
+    check_in_id: post.checkInId ?? null,
     location: `POINT(${post.lng} ${post.lat})`,
   });
   if (error) throw new Error(error.message);

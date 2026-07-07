@@ -61,3 +61,4 @@
 | [0007](0007-ota-updates.md) | 배포: EAS Update(OTA)로 JS 즉시 배포 | 채택 |
 | [0008](0008-scheduled-checkin.md) | 예약 체크인 (미래 시작 + scheduled 상태) | 채택 |
 | [0009](0009-post-visibility.md) | 포스트 공개 범위 (전체/친구/비공개) | 채택 |
+| [0010](0010-guardians-and-participants.md) | 임시 지킴이 + 참가신청(승인제·단체 채팅) | 채택 |
