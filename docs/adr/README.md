@@ -64,3 +64,4 @@
 | [0010](0010-guardians-and-participants.md) | 임시 지킴이 + 참가신청(승인제·단체 채팅) | 채택 |
 | [0011](0011-safety-sweep-pgcron.md) | 서버 안전 자동화: pg_cron in-DB 스윕 | 채택 |
 | [0012](0012-design-alpine-premium.md) | 비주얼 시스템: Alpine Premium | 채택 |
+| [0013](0013-feed-blended-ranking.md) | 피드 정렬: 혼합 점수(최신성+근접성) | 채택 |
