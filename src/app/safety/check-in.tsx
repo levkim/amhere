@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -37,6 +36,19 @@ const START_OPTIONS = [
 
 const MAX_START_MS = 7 * 24 * 60 * 60 * 1000; // 최대 7일 뒤
 
+// 공개 범위 (비공개 = 피드에 안 올림)
+type ShareScope = "public" | "friends" | "private";
+const SHARE_OPTIONS: { key: ShareScope; label: string }[] = [
+  { key: "public", label: "🌐 전체 공개" },
+  { key: "friends", label: "🤝 친구에게만" },
+  { key: "private", label: "🔒 비공개" },
+];
+const SHARE_DESC: Record<ShareScope, string> = {
+  public: "주변 모두에게 소식이 공유돼 같은 곳의 버디를 만날 수 있어요.",
+  friends: "수락된 버디(친구)에게만 보여요. 낯선 사람에겐 노출되지 않아 더 안전해요.",
+  private: "아무에게도 공개하지 않아요. 나만 아는 안전 기록으로 남습니다.",
+};
+
 function formatDateTime(d: Date): string {
   return d.toLocaleString("ko-KR", {
     month: "short",
@@ -60,7 +72,8 @@ export default function CheckIn() {
   const [showIosPicker, setShowIosPicker] = useState<"start" | "end" | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [myTags, setMyTags] = useState<string[]>([]);
-  const [shareToFeed, setShareToFeed] = useState(true);
+  // 즉시 시작은 전체 공개, 예약(미래)은 안전을 위해 친구에게만이 기본값
+  const [shareScope, setShareScope] = useState<ShareScope>("public");
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
@@ -81,9 +94,18 @@ export default function CheckIn() {
   const effectiveContactId =
     selectedContactId ?? (contacts && contacts.length === 1 ? contacts[0].id : null);
 
+  const [scopeTouched, setScopeTouched] = useState(false);
+
   const scheduledStartAt: Date =
     customStart ?? new Date(Date.now() + (startOffsetMin ?? 0) * 60_000);
   const isScheduled = scheduledStartAt.getTime() > Date.now() + 60_000;
+
+  // 사용자가 직접 안 골랐으면: 즉시=전체공개, 예약=친구에게만(안전)
+  const effectiveScope: ShareScope = scopeTouched
+    ? shareScope
+    : isScheduled
+      ? "friends"
+      : "public";
 
   const expectedEndAt: Date | null = customEnd
     ? customEnd
@@ -157,7 +179,7 @@ export default function CheckIn() {
         contactId: effectiveContactId,
       });
 
-      if (shareToFeed) {
+      if (effectiveScope !== "private") {
         try {
           const what = title.trim() ? ` · ${title.trim()}` : "";
           const body = isScheduled
@@ -169,6 +191,7 @@ export default function CheckIn() {
             activity,
             lat: coords.lat,
             lng: coords.lng,
+            visibility: effectiveScope,
           });
         } catch (e) {
           console.warn("share-to-feed failed:", e);
@@ -378,23 +401,28 @@ export default function CheckIn() {
           </Card>
         )}
 
-        <Text style={styles.sectionTitle}>주변에 공유</Text>
-        <View style={styles.shareRow}>
-          <View style={styles.shareText}>
-            <Text style={styles.shareTitle}>&lsquo;지금 주변에서&rsquo;에 소식 올리기</Text>
-            <Text style={styles.shareDesc}>
-              {isScheduled
-                ? "켜면 '예정' 소식으로 미리 공유돼 같이 갈 버디를 모집할 수 있어요."
-                : "켜면 시작 소식이 주변 피드에 공유돼 같은 곳의 버디를 만날 수 있어요."}
-              {" (끄면 아무에게도 공개되지 않아요)"}
-            </Text>
-          </View>
-          <Switch
-            value={shareToFeed}
-            onValueChange={setShareToFeed}
-            trackColor={{ true: colors.primary, false: colors.border }}
-          />
+        <Text style={styles.sectionTitle}>공개 범위</Text>
+        <View style={styles.options}>
+          {SHARE_OPTIONS.map((opt) => {
+            const on = effectiveScope === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                onPress={() => {
+                  setShareScope(opt.key);
+                  setScopeTouched(true);
+                }}
+                style={[styles.option, on && styles.optionActive]}
+              >
+                <Text style={[styles.optionText, on && styles.optionTextActive]}>{opt.label}</Text>
+              </Pressable>
+            );
+          })}
         </View>
+        <Text style={styles.tagHint}>
+          {SHARE_DESC[effectiveScope]}
+          {isScheduled && !scopeTouched ? " (예약 활동은 안전을 위해 기본이 친구에게만이에요)" : ""}
+        </Text>
 
         <Text style={styles.notice}>
           {expectedEndAt
@@ -474,10 +502,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   contactList: { gap: spacing.sm },
-  shareRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
-  shareText: { flex: 1 },
-  shareTitle: { ...typography.body, color: colors.text, fontWeight: "600" },
-  shareDesc: { ...typography.caption, color: colors.subtext, lineHeight: 18, marginTop: 2 },
   noContact: { gap: spacing.sm + 4 },
   noContactText: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   notice: {

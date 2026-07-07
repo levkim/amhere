@@ -21,6 +21,7 @@ const INITIAL_POSTS: Post[] = [
     expiresAt: hoursLater(23),
     helpfulCount: 5,
     iHelped: false,
+    visibility: "public",
   },
   {
     id: "mock-2",
@@ -38,6 +39,7 @@ const INITIAL_POSTS: Post[] = [
     expiresAt: hoursLater(21),
     helpfulCount: 12,
     iHelped: true,
+    visibility: "public",
   },
   {
     id: "mock-3",
@@ -55,6 +57,7 @@ const INITIAL_POSTS: Post[] = [
     expiresAt: hoursLater(23.5),
     helpfulCount: 2,
     iHelped: false,
+    visibility: "public",
   },
 ];
 
@@ -70,8 +73,9 @@ export function addMockPost(input: {
   lat: number;
   lng: number;
   imageUri?: string | null;
+  visibility?: Post["visibility"];
 }): void {
-  const { imageUri, ...rest } = input;
+  const { imageUri, visibility, ...rest } = input;
   posts = [
     {
       id: `mock-${Date.now()}`,
@@ -84,6 +88,7 @@ export function addMockPost(input: {
       expiresAt: hoursLater(24),
       helpfulCount: 0,
       iHelped: false,
+      visibility: visibility ?? "public",
       ...rest,
     },
     ...posts,

@@ -79,7 +79,10 @@ export function PostCard({ post }: { post: Post }) {
         </View>
       ) : null}
       <View style={styles.header}>
-        <Text style={styles.nickname}>{post.nickname}</Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.nickname}>{post.nickname}</Text>
+          {post.visibility === "friends" ? <Text style={styles.friendsOnly}>🤝 친구공개</Text> : null}
+        </View>
         <Text style={styles.meta}>
           {distanceLabel(post.distanceM)} · {timeAgo(post.createdAt)}
         </Text>
@@ -119,7 +122,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.sm,
   },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   nickname: { ...typography.heading, color: colors.text },
+  friendsOnly: { ...typography.caption, color: colors.accent },
   meta: { ...typography.caption, color: colors.subtext },
   body: { ...typography.body, color: colors.text, lineHeight: 22 },
   image: { width: "100%", height: 180, borderRadius: 12, marginTop: spacing.sm + 4 },
