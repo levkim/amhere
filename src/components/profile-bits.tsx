@@ -2,24 +2,27 @@ import { Image, Linking, Pressable, StyleSheet, Text, View } from "react-native"
 import { SNS_PLATFORMS, toSnsUrl, type SnsLinks } from "@/features/profile/sns";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
-/** 프로필 사진 (없으면 이모지 폴백) */
+/** 프로필 사진 (없으면 이모지 폴백) — 액센트 링 테두리 */
 export function Avatar({ url, size = 72 }: { url: string | null; size?: number }) {
-  if (url) {
-    return (
-      <Image
-        source={{ uri: url }}
-        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceHigh }}
-      />
-    );
-  }
+  const ring = {
+    width: size + 6,
+    height: size + 6,
+    borderRadius: (size + 6) / 2,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  };
+  const inner = { width: size, height: size, borderRadius: size / 2 };
   return (
-    <View
-      style={[
-        styles.fallback,
-        { width: size, height: size, borderRadius: size / 2 },
-      ]}
-    >
-      <Text style={{ fontSize: size * 0.55 }}>⛰️</Text>
+    <View style={ring}>
+      {url ? (
+        <Image source={{ uri: url }} style={[inner, { backgroundColor: colors.surfaceHigh }]} />
+      ) : (
+        <View style={[styles.fallback, inner]}>
+          <Text style={{ fontSize: size * 0.55 }}>⛰️</Text>
+        </View>
+      )}
     </View>
   );
 }

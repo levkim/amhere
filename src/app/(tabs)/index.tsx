@@ -86,17 +86,20 @@ export default function MapHome() {
           {activeCheckIn?.state === "scheduled" ? (
             // 예약(미래 시작) 상태 — 빨간 테두리 + 시작까지 카운트다운
             <>
+              <Text style={styles.scheduledLabel}>예약된 아웃도어 활동</Text>
               <Text style={styles.scheduledTitle}>
-                🔴 {activeCheckIn.locationName ? `${activeCheckIn.locationName} · ` : ""}
-                {ACTIVITY_LABELS[activeCheckIn.activity]} 예약됨
+                {activeCheckIn.locationName ? `${activeCheckIn.locationName} · ` : ""}
+                {ACTIVITY_LABELS[activeCheckIn.activity]}
               </Text>
               {activeCheckIn.title ? (
                 <Text style={styles.safetyDesc}>{activeCheckIn.title}</Text>
               ) : null}
-              <Text style={styles.countdown}>
-                ⏱ 시작까지{" "}
-                {formatCountdown(new Date(activeCheckIn.scheduledStartAt).getTime() - now)}
-              </Text>
+              <View style={styles.ring}>
+                <Text style={styles.ringCaption}>시작까지</Text>
+                <Text style={styles.ringValue}>
+                  {formatCountdown(new Date(activeCheckIn.scheduledStartAt).getTime() - now)}
+                </Text>
+              </View>
               <View style={styles.safetyActions}>
                 <View style={styles.safetyActionBtn}>
                   <Button
@@ -192,8 +195,28 @@ const styles = StyleSheet.create({
   sheetContent: { padding: spacing.md, paddingBottom: spacing.xl },
   safetyCard: { marginBottom: spacing.lg, gap: spacing.sm },
   scheduledCard: { borderColor: colors.danger, borderWidth: 2 },
-  scheduledTitle: { ...typography.heading, color: colors.danger },
-  countdown: { ...typography.title, color: colors.text },
+  scheduledLabel: {
+    ...typography.caption,
+    color: colors.danger,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  scheduledTitle: { ...typography.heading, color: colors.text },
+  ring: {
+    alignSelf: "center",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 6,
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: spacing.sm,
+  },
+  ringCaption: { ...typography.caption, color: colors.subtext },
+  ringValue: { ...typography.title, fontSize: 26, color: colors.text, marginTop: 2 },
   safetyActions: { flexDirection: "row", gap: spacing.sm },
   safetyActionBtn: { flex: 1 },
   safetyTitle: { ...typography.heading, color: colors.text },

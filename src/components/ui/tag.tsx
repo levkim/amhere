@@ -13,11 +13,13 @@ const styles = StyleSheet.create({
   tag: {
     backgroundColor: colors.surfaceHigh,
     borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 3,
+    paddingVertical: 4,
     alignSelf: "flex-start",
   },
-  accent: { backgroundColor: "rgba(52, 211, 153, 0.15)" },
+  accent: { backgroundColor: colors.accentSoft, borderColor: "transparent" },
   text: { ...typography.caption, color: colors.subtext },
-  accentText: { color: colors.accent },
+  accentText: { color: colors.accent, fontWeight: "700" },
 });
