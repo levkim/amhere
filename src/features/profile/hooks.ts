@@ -17,6 +17,7 @@ export type Profile = {
   level: number;
   avatarUrl: string | null;
   sns: SnsLinks;
+  onboarded: boolean;
 };
 
 const DEMO_PROFILE: Profile = {
@@ -28,6 +29,7 @@ const DEMO_PROFILE: Profile = {
   level: 1,
   avatarUrl: null,
   sns: {},
+  onboarded: true,
 };
 
 function mapProfile(data: any): Profile {
@@ -41,10 +43,12 @@ function mapProfile(data: any): Profile {
     level: data.level,
     avatarUrl: data.avatar_url,
     sns: data.sns ?? {},
+    onboarded: data.onboarded ?? true,
   };
 }
 
-const PROFILE_COLUMNS = "id, nickname, bio, activities, privacy, level, avatar_url, sns";
+const PROFILE_COLUMNS =
+  "id, nickname, bio, activities, privacy, level, avatar_url, sns, onboarded";
 
 export function useMyProfile() {
   const session = useSessionStore((s) => s.session);
@@ -93,7 +97,9 @@ export function useUserProfile(userId: string) {
 export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (
-      patch: Partial<Pick<Profile, "nickname" | "bio" | "activities" | "privacy" | "sns">>,
+      patch: Partial<
+        Pick<Profile, "nickname" | "bio" | "activities" | "privacy" | "sns" | "onboarded">
+      >,
     ) => {
       if (!supabase) return; // 데모 모드: 저장 생략
       const user = (await supabase.auth.getUser()).data.user;

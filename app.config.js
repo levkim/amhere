@@ -28,10 +28,8 @@ export default {
       package: "com.amhere.app",
       ...googleServices,
       adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
+        backgroundColor: "#0B1120",
         foregroundImage: "./assets/images/android-icon-foreground.png",
-        backgroundImage: "./assets/images/android-icon-background.png",
-        monochromeImage: "./assets/images/android-icon-monochrome.png",
       },
     },
     web: {
@@ -51,9 +49,9 @@ export default {
       [
         "expo-splash-screen",
         {
-          backgroundColor: "#0F1B2D",
+          backgroundColor: "#0B1120",
           image: "./assets/images/splash-icon.png",
-          imageWidth: 76,
+          imageWidth: 96,
         },
       ],
       [

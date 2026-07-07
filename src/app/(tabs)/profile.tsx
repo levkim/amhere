@@ -8,6 +8,7 @@ import { isDemoMode } from "@/lib/supabase";
 import { useSessionStore } from "@/stores/session";
 import { useMyProfile } from "@/features/profile/hooks";
 import { useMyStats } from "@/features/profile/stats";
+import { useMyBadges } from "@/features/profile/badges";
 import { Avatar, SnsRow } from "@/components/profile-bits";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography } from "@/theme/tokens";
 
@@ -27,6 +28,7 @@ export default function Profile() {
   const signOut = useSessionStore((s) => s.signOut);
   const { data: profile } = useMyProfile();
   const { data: stats } = useMyStats();
+  const { data: badges } = useMyBadges();
 
   return (
     <Screen>
@@ -72,6 +74,24 @@ export default function Profile() {
       </Card>
 
       <Card style={styles.card}>
+        <Text style={styles.sectionTitle}>획득한 배지</Text>
+        {badges && badges.length > 0 ? (
+          <View style={styles.badgeGrid}>
+            {badges.map((b) => (
+              <View key={b.code} style={styles.badge}>
+                <Text style={styles.badgeIcon}>{b.icon ?? "🏅"}</Text>
+                <Text style={styles.badgeName}>{b.name}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.desc}>
+            아직 배지가 없어요. 체크인·포스트·버디를 쌓으면 배지가 열려요.
+          </Text>
+        )}
+      </Card>
+
+      <Card style={styles.card}>
         <Text style={styles.sectionTitle}>위치 공개 설정</Text>
         <Text style={styles.desc}>
           현재:{" "}
@@ -110,6 +130,10 @@ const styles = StyleSheet.create({
   badges: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
   editBtn: { marginTop: spacing.sm, gap: spacing.sm },
   sectionTitle: { ...typography.heading, color: colors.text },
+  badgeGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
+  badge: { alignItems: "center", width: 72, gap: 4 },
+  badgeIcon: { fontSize: 34 },
+  badgeName: { ...typography.caption, color: colors.subtext, textAlign: "center" },
   desc: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   strong: { color: colors.text, fontWeight: "600" },
   footer: { flex: 1, justifyContent: "flex-end", paddingBottom: spacing.xl },

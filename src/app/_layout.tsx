@@ -5,31 +5,30 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { usePushRegistration } from "@/features/notifications/use-push-registration";
 import { useSafetyStore } from "@/features/safety/hooks";
+import { useMyProfile } from "@/features/profile/hooks";
+import { isDemoMode } from "@/lib/supabase";
 import { useIsSignedIn, useSessionStore } from "@/stores/session";
 import { colors } from "@/theme/tokens";
 
-export default function RootLayout() {
-  const init = useSessionStore((s) => s.init);
-  const initialized = useSessionStore((s) => s.initialized);
+// 프로바이더 안쪽에서 프로필을 읽어 온보딩 여부를 판단한다.
+function RootNav() {
   const session = useSessionStore((s) => s.session);
   const signedIn = useIsSignedIn();
   const hydrateSafety = useSafetyStore((s) => s.hydrate);
+  const { data: profile } = useMyProfile();
 
-  useEffect(() => {
-    init();
-  }, [init]);
+  usePushRegistration();
 
-  usePushRegistration(); // 로그인 시 이 기기를 알림 수신 대상으로 등록
-
-  // 로그인되면 진행/예약 중인 체크인을 DB에서 복원 (앱 재시작해도 배너 유지)
   useEffect(() => {
     if (session) hydrateSafety();
   }, [session, hydrateSafety]);
 
-  if (!initialized) return null; // 스플래시 유지
+  // 데모는 온보딩 없음. 로그인했는데 아직 온보딩 안 했으면 온보딩으로.
+  const needsOnboarding = signedIn && !isDemoMode && profile ? !profile.onboarded : false;
+  const inApp = signedIn && !needsOnboarding;
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -38,18 +37,15 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.bg },
         }}
       >
-        <Stack.Protected guard={signedIn}>
+        <Stack.Protected guard={needsOnboarding}>
+          <Stack.Screen name="(onboarding)/setup" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={inApp}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="post/[id]" options={{ title: "포스트" }} />
-          <Stack.Screen
-            name="post/new"
-            options={{ title: "새 포스트", presentation: "modal" }}
-          />
+          <Stack.Screen name="post/new" options={{ title: "새 포스트", presentation: "modal" }} />
           <Stack.Screen name="buddy/find" options={{ title: "버디 찾기" }} />
-          <Stack.Screen
-            name="buddy/new"
-            options={{ title: "버디 요청", presentation: "modal" }}
-          />
+          <Stack.Screen name="buddy/new" options={{ title: "버디 요청", presentation: "modal" }} />
           <Stack.Screen name="chat/[requestId]" options={{ title: "채팅" }} />
           <Stack.Screen name="activity/[id]/participants" options={{ title: "참가신청 관리" }} />
           <Stack.Screen name="activity/[id]/chat" options={{ title: "단체 채팅" }} />
@@ -77,6 +73,23 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack.Protected>
       </Stack>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  const init = useSessionStore((s) => s.init);
+  const initialized = useSessionStore((s) => s.initialized);
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  if (!initialized) return null; // 스플래시 유지
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RootNav />
     </QueryClientProvider>
   );
 }
