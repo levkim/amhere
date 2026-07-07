@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
@@ -24,6 +25,18 @@ import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } f
 
 const DURATIONS = [2, 4, 6, 8, 10, 12] as const;
 
+// 시작 일시 프리셋 (지금부터 분 단위 오프셋)
+const START_OPTIONS = [
+  { label: "바로 시작", min: 0 },
+  { label: "10분 후", min: 10 },
+  { label: "30분 후", min: 30 },
+  { label: "1시간 후", min: 60 },
+  { label: "2시간 후", min: 120 },
+  { label: "3시간 후", min: 180 },
+] as const;
+
+const MAX_START_MS = 7 * 24 * 60 * 60 * 1000; // 최대 7일 뒤
+
 function formatDateTime(d: Date): string {
   return d.toLocaleString("ko-KR", {
     month: "short",
@@ -34,14 +47,20 @@ function formatDateTime(d: Date): string {
 }
 
 export default function CheckIn() {
+  const [title, setTitle] = useState("");
   const [locationName, setLocationName] = useState("");
   const [activity, setActivity] = useState<Activity>("hiking");
+
+  // 시작 일시: 프리셋 오프셋(분) 또는 직접 선택(customStart)
+  const [startOffsetMin, setStartOffsetMin] = useState<number | null>(0);
+  const [customStart, setCustomStart] = useState<Date | null>(null);
+
   const [duration, setDuration] = useState<number | null>(4);
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
-  const [showIosPicker, setShowIosPicker] = useState(false);
+  const [showIosPicker, setShowIosPicker] = useState<"start" | "end" | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [myTags, setMyTags] = useState<string[]>([]);
-  const [shareToFeed, setShareToFeed] = useState(true); // 기본 켜짐 — 시작 소식이 피드·'지금 주변에서'에 공유됨 (끄기 가능)
+  const [shareToFeed, setShareToFeed] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
@@ -55,28 +74,48 @@ export default function CheckIn() {
   useEffect(() => {
     if (pickedPlace) {
       setLocationName(pickedPlace.name);
-      setPickedPlace(null); // 반영 후 비워서 재적용 방지
+      setPickedPlace(null);
     }
   }, [pickedPlace, setPickedPlace]);
 
-  // 연락처가 하나뿐이면 자동 선택
   const effectiveContactId =
     selectedContactId ?? (contacts && contacts.length === 1 ? contacts[0].id : null);
+
+  const scheduledStartAt: Date =
+    customStart ?? new Date(Date.now() + (startOffsetMin ?? 0) * 60_000);
+  const isScheduled = scheduledStartAt.getTime() > Date.now() + 60_000;
 
   const expectedEndAt: Date | null = customEnd
     ? customEnd
     : duration
-      ? new Date(Date.now() + duration * 3_600_000)
+      ? new Date(scheduledStartAt.getTime() + duration * 3_600_000)
       : null;
 
-  const pickCustomEnd = () => {
-    const initial = customEnd ?? new Date(Date.now() + 4 * 3_600_000);
+  // 안드로이드: 날짜→시간 순서. iOS: datetime 스피너
+  const pickCustom = (which: "start" | "end") => {
+    const initial =
+      which === "start"
+        ? (customStart ?? new Date(Date.now() + 60 * 60_000))
+        : (customEnd ?? new Date(scheduledStartAt.getTime() + 4 * 3_600_000));
+    const minimumDate = which === "start" ? new Date() : scheduledStartAt;
+    const maximumDate = which === "start" ? new Date(Date.now() + MAX_START_MS) : undefined;
+
+    const apply = (d: Date) => {
+      if (which === "start") {
+        setCustomStart(d);
+        setStartOffsetMin(null);
+      } else {
+        setCustomEnd(d);
+        setDuration(null);
+      }
+    };
+
     if (Platform.OS === "android") {
-      // 안드로이드: 날짜 → 시간 순서로 네이티브 선택창
       DateTimePickerAndroid.open({
         value: initial,
         mode: "date",
-        minimumDate: new Date(),
+        minimumDate,
+        maximumDate,
         onChange: (event, date) => {
           if (event.type !== "set" || !date) return;
           DateTimePickerAndroid.open({
@@ -84,42 +123,49 @@ export default function CheckIn() {
             mode: "time",
             onChange: (timeEvent, time) => {
               if (timeEvent.type !== "set" || !time) return;
-              const end = new Date(date);
-              end.setHours(time.getHours(), time.getMinutes(), 0, 0);
-              setCustomEnd(end);
-              setDuration(null);
+              const d = new Date(date);
+              d.setHours(time.getHours(), time.getMinutes(), 0, 0);
+              apply(d);
             },
           });
         },
       });
     } else {
-      setShowIosPicker(true);
+      setShowIosPicker(which);
     }
   };
 
   const begin = async () => {
     if (!expectedEndAt) return;
-    if (expectedEndAt.getTime() <= Date.now()) {
-      Alert.alert("시간 확인", "종료 시간이 이미 지났어요. 다시 선택해 주세요.");
+    if (scheduledStartAt.getTime() > Date.now() + MAX_START_MS) {
+      Alert.alert("시작 일시 확인", "시작 시각은 지금부터 최대 7일 뒤까지만 예약할 수 있어요.");
+      return;
+    }
+    if (expectedEndAt.getTime() <= scheduledStartAt.getTime()) {
+      Alert.alert("시간 확인", "종료 시각이 시작 시각보다 빨라요. 다시 선택해 주세요.");
       return;
     }
     setLoading(true);
     try {
       await start({
         activity,
+        title: title.trim() || null,
         locationName: locationName.trim(),
         tags: myTags,
+        scheduledStartAt,
         expectedEndAt,
         contactId: effectiveContactId,
       });
 
-      // 선택했을 때만 '지금 주변에서'에 시작 소식 공유 (실패해도 체크인은 유지)
-      // 문구 대신 내가 고른 활동 태그가 노출된다
       if (shareToFeed) {
         try {
+          const what = title.trim() ? ` · ${title.trim()}` : "";
+          const body = isScheduled
+            ? `⏱ ${formatDateTime(scheduledStartAt)} ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 예정!${what}`
+            : `🏔️ ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 시작!${what}`;
           await createPost({
-            body: `🏔️ ${locationName.trim()}에서 ${ACTIVITY_LABELS[activity]} 시작!`,
-            tags: ["체크인", ...myTags],
+            body,
+            tags: ["체크인", ...(isScheduled ? ["예정"] : []), ...myTags],
             activity,
             lat: coords.lat,
             lng: coords.lng,
@@ -140,7 +186,17 @@ export default function CheckIn() {
   return (
     <Screen>
       <ScrollView keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionTitle}>어디에서 하시나요?</Text>
+        <Text style={styles.sectionTitle}>무엇을 하나요?</Text>
+        <TextInput
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="예) 정상 등반 후 백컨트리 하강"
+          placeholderTextColor={colors.subtext}
+          maxLength={60}
+        />
+
+        <Text style={styles.sectionTitle}>어디에서 시작하나요?</Text>
         <Pressable
           onPress={() => router.push("/safety/pick-location")}
           style={({ pressed }) => [styles.locationRow, pressed && styles.locationRowPressed]}
@@ -175,6 +231,38 @@ export default function CheckIn() {
           ))}
         </View>
 
+        <Text style={styles.sectionTitle}>시작 일시</Text>
+        <View style={styles.options}>
+          {START_OPTIONS.map((opt) => {
+            const on = !customStart && startOffsetMin === opt.min;
+            return (
+              <Pressable
+                key={opt.min}
+                onPress={() => {
+                  setStartOffsetMin(opt.min);
+                  setCustomStart(null);
+                }}
+                style={[styles.option, on && styles.optionActive]}
+              >
+                <Text style={[styles.optionText, on && styles.optionTextActive]}>{opt.label}</Text>
+              </Pressable>
+            );
+          })}
+          <Pressable
+            onPress={() => pickCustom("start")}
+            style={[styles.option, customStart && styles.optionActive]}
+          >
+            <Text style={[styles.optionText, customStart && styles.optionTextActive]}>
+              {customStart ? `${formatDateTime(customStart)} 시작` : "📅 직접선택 (최대 7일 뒤)"}
+            </Text>
+          </Pressable>
+        </View>
+        {isScheduled ? (
+          <Text style={styles.scheduleNote}>
+            ⏱ {formatDateTime(scheduledStartAt)} 시작 예약 — 시작 시각에 알림을 보내드려요.
+          </Text>
+        ) : null}
+
         <Text style={styles.sectionTitle}>예상 활동 시간</Text>
         <View style={styles.options}>
           {DURATIONS.map((h) => (
@@ -194,23 +282,34 @@ export default function CheckIn() {
             </Pressable>
           ))}
           <Pressable
-            onPress={pickCustomEnd}
+            onPress={() => pickCustom("end")}
             style={[styles.option, customEnd && styles.optionActive]}
           >
             <Text style={[styles.optionText, customEnd && styles.optionTextActive]}>
-              {customEnd ? `${formatDateTime(customEnd)} 종료` : "📅 직접 선택"}
+              {customEnd ? `${formatDateTime(customEnd)} 종료` : "📅 종료 직접 선택"}
             </Text>
           </Pressable>
         </View>
 
         {showIosPicker && Platform.OS !== "android" ? (
           <DateTimePicker
-            value={customEnd ?? new Date(Date.now() + 4 * 3_600_000)}
+            value={
+              showIosPicker === "start"
+                ? (customStart ?? new Date(Date.now() + 60 * 60_000))
+                : (customEnd ?? new Date(scheduledStartAt.getTime() + 4 * 3_600_000))
+            }
             mode="datetime"
-            minimumDate={new Date()}
+            minimumDate={showIosPicker === "start" ? new Date() : scheduledStartAt}
+            maximumDate={
+              showIosPicker === "start" ? new Date(Date.now() + MAX_START_MS) : undefined
+            }
             onChange={(event, date) => {
-              setShowIosPicker(false);
-              if (date) {
+              const which = showIosPicker;
+              setShowIosPicker(null);
+              if (date && which === "start") {
+                setCustomStart(date);
+                setStartOffsetMin(null);
+              } else if (date && which === "end") {
                 setCustomEnd(date);
                 setDuration(null);
               }
@@ -282,10 +381,12 @@ export default function CheckIn() {
         <Text style={styles.sectionTitle}>주변에 공유</Text>
         <View style={styles.shareRow}>
           <View style={styles.shareText}>
-            <Text style={styles.shareTitle}>&lsquo;지금 주변에서&rsquo;에 시작 소식 올리기</Text>
+            <Text style={styles.shareTitle}>&lsquo;지금 주변에서&rsquo;에 소식 올리기</Text>
             <Text style={styles.shareDesc}>
-              켜면 &ldquo;🏔️ ○○에서 {ACTIVITY_LABELS[activity]} 시작!&rdquo; 포스트가 주변
-              피드에 공유돼요. 같은 곳의 버디를 만날 수 있어요. (끄면 아무에게도 공개되지 않아요)
+              {isScheduled
+                ? "켜면 '예정' 소식으로 미리 공유돼 같이 갈 버디를 모집할 수 있어요."
+                : "켜면 시작 소식이 주변 피드에 공유돼 같은 곳의 버디를 만날 수 있어요."}
+              {" (끄면 아무에게도 공개되지 않아요)"}
             </Text>
           </View>
           <Switch
@@ -305,7 +406,7 @@ export default function CheckIn() {
 
       <View style={styles.footer}>
         <Button
-          label="활동 시작"
+          label={isScheduled ? "활동 예약" : "활동 시작"}
           onPress={begin}
           loading={loading}
           disabled={!expectedEndAt || locationName.trim().length === 0}
@@ -321,6 +422,16 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: spacing.lg,
     marginBottom: spacing.sm + 4,
+  },
+  input: {
+    ...typography.body,
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
   },
   locationRow: {
     flexDirection: "row",
@@ -350,6 +461,12 @@ const styles = StyleSheet.create({
   optionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   optionText: { ...typography.body, color: colors.subtext },
   optionTextActive: { color: colors.text, fontWeight: "600" },
+  scheduleNote: {
+    ...typography.caption,
+    color: colors.warn,
+    marginTop: spacing.sm,
+    lineHeight: 18,
+  },
   tagHint: {
     ...typography.caption,
     color: colors.subtext,

@@ -7,6 +7,7 @@ import { useMyCheckIns, type CheckInRecord } from "@/features/safety/history";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
 const STATUS_LABELS: Record<CheckInRecord["status"], { label: string; tone: "accent" | "default" }> = {
+  scheduled: { label: "예약됨", tone: "accent" },
   active: { label: "진행 중", tone: "accent" },
   completed: { label: "완료", tone: "default" },
   overdue: { label: "시간 초과", tone: "default" },
@@ -45,8 +46,9 @@ function RecordCard({ record }: { record: CheckInRecord }) {
         </Text>
         <Tag label={status.label} tone={status.tone} />
       </View>
+      {record.title ? <Text style={styles.recordTitle}>{record.title}</Text> : null}
       <Text style={styles.meta}>
-        {ACTIVITY_LABELS[record.activity]} · {formatDate(record.startedAt)} 시작
+        {ACTIVITY_LABELS[record.activity]} · {formatDate(record.scheduledStartAt)} 시작
         {duration ? ` · ${duration}` : ""}
       </Text>
       {record.tags.length > 0 ? (
@@ -146,6 +148,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: { ...typography.heading, color: colors.text, flex: 1 },
+  recordTitle: { ...typography.body, color: colors.text },
   meta: { ...typography.caption, color: colors.subtext },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
 });

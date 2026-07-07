@@ -4,19 +4,27 @@ import { Stack } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { usePushRegistration } from "@/features/notifications/use-push-registration";
+import { useSafetyStore } from "@/features/safety/hooks";
 import { useIsSignedIn, useSessionStore } from "@/stores/session";
 import { colors } from "@/theme/tokens";
 
 export default function RootLayout() {
   const init = useSessionStore((s) => s.init);
   const initialized = useSessionStore((s) => s.initialized);
+  const session = useSessionStore((s) => s.session);
   const signedIn = useIsSignedIn();
+  const hydrateSafety = useSafetyStore((s) => s.hydrate);
 
   useEffect(() => {
     init();
   }, [init]);
 
   usePushRegistration(); // 로그인 시 이 기기를 알림 수신 대상으로 등록
+
+  // 로그인되면 진행/예약 중인 체크인을 DB에서 복원 (앱 재시작해도 배너 유지)
+  useEffect(() => {
+    if (session) hydrateSafety();
+  }, [session, hydrateSafety]);
 
   if (!initialized) return null; // 스플래시 유지
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Mapbox, { Camera, MapView, MarkerView } from "@rnmapbox/maps";
 import { router } from "expo-router";
@@ -30,7 +30,8 @@ type Props = {
  * 라이브 맵 — Mapbox 지도 위에 내 위치, 주변 포스트(핀), 주변 사용자를 표시한다.
  * 이 컴포넌트는 네이티브 모듈이라 Expo Go에서는 동작하지 않고 dev build가 필요하다.
  */
-export function LiveMap({ center, posts, users }: Props) {
+// 부모(홈)가 카운트다운으로 매초 리렌더되어도 지도는 데이터가 바뀔 때만 갱신
+export const LiveMap = memo(function LiveMap({ center, posts, users }: Props) {
   useEffect(() => {
     Mapbox.setTelemetryEnabled(false);
   }, []);
@@ -81,7 +82,7 @@ export function LiveMap({ center, posts, users }: Props) {
       })}
     </MapView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   map: { flex: 1 },

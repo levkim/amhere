@@ -10,6 +10,7 @@ import { useNearbyPosts } from "@/features/feed/hooks";
 import { useNearbyUsers } from "@/features/matching/hooks";
 import { useCurrentLocation } from "@/features/location/use-current-location";
 import { useSafetyStore } from "@/features/safety/hooks";
+import { formatCountdown, useNow } from "@/features/safety/use-now";
 import { useEffectiveCoords } from "@/stores/location";
 import {
   ACTIVITY_LABELS,
@@ -29,6 +30,8 @@ export default function MapHome() {
   const { data: posts } = useNearbyPosts();
   const { data: users } = useNearbyUsers();
   const activeCheckIn = useSafetyStore((s) => s.active);
+  // 예약 카운트다운일 때만 1초 틱, 그 외엔 느리게 (배터리 절약)
+  const now = useNow(activeCheckIn?.state === "scheduled" ? 1000 : 60_000);
   const [activityFilter, setActivityFilter] = useState<Activity | null>(null);
 
   const filteredPosts = useMemo(
@@ -74,8 +77,43 @@ export default function MapHome() {
 
       <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent}>
         {/* 안전 체크인 배너 */}
-        <Card style={styles.safetyCard}>
-          {activeCheckIn ? (
+        <Card
+          style={[
+            styles.safetyCard,
+            activeCheckIn?.state === "scheduled" && styles.scheduledCard,
+          ]}
+        >
+          {activeCheckIn?.state === "scheduled" ? (
+            // 예약(미래 시작) 상태 — 빨간 테두리 + 시작까지 카운트다운
+            <>
+              <Text style={styles.scheduledTitle}>
+                🔴 {activeCheckIn.locationName ? `${activeCheckIn.locationName} · ` : ""}
+                {ACTIVITY_LABELS[activeCheckIn.activity]} 예약됨
+              </Text>
+              {activeCheckIn.title ? (
+                <Text style={styles.safetyDesc}>{activeCheckIn.title}</Text>
+              ) : null}
+              <Text style={styles.countdown}>
+                ⏱ 시작까지{" "}
+                {formatCountdown(new Date(activeCheckIn.scheduledStartAt).getTime() - now)}
+              </Text>
+              <View style={styles.safetyActions}>
+                <View style={styles.safetyActionBtn}>
+                  <Button
+                    label="지금 시작"
+                    onPress={() => useSafetyStore.getState().confirmStart()}
+                  />
+                </View>
+                <View style={styles.safetyActionBtn}>
+                  <Button
+                    label="예약 취소"
+                    variant="secondary"
+                    onPress={() => useSafetyStore.getState().cancelScheduled()}
+                  />
+                </View>
+              </View>
+            </>
+          ) : activeCheckIn ? (
             <>
               <Text style={styles.safetyTitle}>
                 🟢 {activeCheckIn.locationName ? `${activeCheckIn.locationName} · ` : ""}
@@ -153,6 +191,9 @@ const styles = StyleSheet.create({
   sheet: { flex: 1 },
   sheetContent: { padding: spacing.md, paddingBottom: spacing.xl },
   safetyCard: { marginBottom: spacing.lg, gap: spacing.sm },
+  scheduledCard: { borderColor: colors.danger, borderWidth: 2 },
+  scheduledTitle: { ...typography.heading, color: colors.danger },
+  countdown: { ...typography.title, color: colors.text },
   safetyActions: { flexDirection: "row", gap: spacing.sm },
   safetyActionBtn: { flex: 1 },
   safetyTitle: { ...typography.heading, color: colors.text },
