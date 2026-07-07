@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router, type Href } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,47 @@ import { Tag } from "@/components/ui/tag";
 import { isDemoMode } from "@/lib/supabase";
 import { useSessionStore } from "@/stores/session";
 import { useMyProfile } from "@/features/profile/hooks";
+import { useMyStats } from "@/features/profile/stats";
 import { Avatar, SnsRow } from "@/components/profile-bits";
-import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
+import { ACTIVITY_LABELS, colors, radius, spacing, typography } from "@/theme/tokens";
+
+function Stat({ value, label, to }: { value: number; label: string; to: Href }) {
+  return (
+    <Pressable
+      onPress={() => router.push(to)}
+      style={({ pressed }) => [styles.stat, pressed && { opacity: 0.6 }]}
+    >
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </Pressable>
+  );
+}
 
 export default function Profile() {
   const signOut = useSessionStore((s) => s.signOut);
   const { data: profile } = useMyProfile();
+  const { data: stats } = useMyStats();
 
   return (
     <Screen>
       <Card style={styles.card}>
-        <Avatar url={profile?.avatarUrl ?? null} size={72} />
-        <Text style={styles.name}>{profile?.nickname ?? "..."}</Text>
+        {/* 아바타 + [닉네임 / 친구·체크인·포스트] 가로 헤더 */}
+        <View style={styles.header}>
+          <Avatar url={profile?.avatarUrl ?? null} size={64} />
+          <View style={styles.headerRight}>
+            <Text style={styles.name} numberOfLines={1}>
+              {profile?.nickname ?? "..."}
+            </Text>
+            <View style={styles.stats}>
+              <Stat value={stats?.friends ?? 0} label="친구" to="/(tabs)/buddies" />
+              <View style={styles.statDivider} />
+              <Stat value={stats?.checkins ?? 0} label="체크인" to="/profile/history" />
+              <View style={styles.statDivider} />
+              <Stat value={stats?.posts ?? 0} label="포스트" to="/(tabs)/feed" />
+            </View>
+          </View>
+        </View>
+
         {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
         <SnsRow sns={profile?.sns ?? {}} />
         <View style={styles.badges}>
@@ -63,7 +92,20 @@ export default function Profile() {
 
 const styles = StyleSheet.create({
   card: { marginTop: spacing.md, gap: spacing.sm },
+  header: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  headerRight: { flex: 1, gap: spacing.sm },
   name: { ...typography.title, color: colors.text },
+  stats: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceHigh,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+  },
+  stat: { flex: 1, alignItems: "center" },
+  statValue: { ...typography.heading, fontSize: 20, color: colors.text },
+  statLabel: { ...typography.caption, color: colors.subtext, marginTop: 1 },
+  statDivider: { width: 1, height: 24, backgroundColor: colors.border },
   bio: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
   editBtn: { marginTop: spacing.sm, gap: spacing.sm },
