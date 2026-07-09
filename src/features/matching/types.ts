@@ -19,6 +19,7 @@ export type BuddyRequest = {
 export type NearbyUser = {
   userId: string;
   nickname: string;
+  avatarUrl: string | null;
   activity: Activity | null;
   level: number;
   /** 서버에서 가상화된 위치 (친구·20km 이내면 500m, 아니면 10km 반경 내 가상 좌표) */

@@ -29,6 +29,7 @@ export async function fetchNearbyUsers(coords: Coords): Promise<NearbyUser[]> {
   return (data ?? []).map((row: any) => ({
     userId: row.user_id,
     nickname: row.nickname,
+    avatarUrl: row.avatar_url ?? null,
     activity: row.activity,
     level: row.level,
     lat: row.lat, // 서버에서 이미 가상화된 좌표

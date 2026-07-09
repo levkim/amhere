@@ -51,6 +51,7 @@ export const MOCK_NEARBY_USERS: NearbyUser[] = [
   {
     userId: "u1",
     nickname: "파우더준호",
+    avatarUrl: null,
     activity: "ski",
     level: 3,
     lat: 37.648,
@@ -60,6 +61,7 @@ export const MOCK_NEARBY_USERS: NearbyUser[] = [
   {
     userId: "u2",
     nickname: "산타는수진",
+    avatarUrl: null,
     activity: "hiking",
     level: 2,
     lat: 37.62,
@@ -69,6 +71,7 @@ export const MOCK_NEARBY_USERS: NearbyUser[] = [
   {
     userId: "u3",
     nickname: "크루민재",
+    avatarUrl: null,
     activity: "backcountry",
     level: 5,
     lat: 37.66,
