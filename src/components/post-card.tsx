@@ -87,6 +87,7 @@ export function PostCard({ post }: { post: Post }) {
           {distanceLabel(post.distanceM)} · {timeAgo(post.createdAt)}
         </Text>
       </View>
+      {post.placeName ? <Text style={styles.place}>📍 {post.placeName}</Text> : null}
       <Text style={styles.body}>{post.body}</Text>
       {post.imageUrl ? <Image source={{ uri: post.imageUrl }} style={styles.image} /> : null}
       <View style={styles.footer}>
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
   nickname: { ...typography.heading, color: colors.text },
   friendsOnly: { ...typography.caption, color: colors.accent },
   meta: { ...typography.caption, color: colors.subtext },
+  place: { ...typography.caption, color: colors.accent, fontWeight: "700", marginBottom: 4 },
   body: { ...typography.body, color: colors.text, lineHeight: 22 },
   image: { width: "100%", height: 180, borderRadius: 12, marginTop: spacing.sm + 4 },
   footer: {

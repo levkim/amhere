@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -14,12 +14,13 @@ import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Button } from "@/components/ui/button";
 import { useCreatePost } from "@/features/feed/hooks";
+import { tagsForActivity } from "@/features/feed/post-tags";
 import type { PostVisibility } from "@/features/feed/types";
-import { useEffectiveCoords } from "@/stores/location";
+import { usePlacePicker } from "@/features/places/store";
+import { useEffectiveCoords, type Coords } from "@/stores/location";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
 
 const MAX_LEN = 200;
-const PRESET_TAGS = ["설질좋음", "결빙주의", "혼잡", "크루모집", "초보환영", "뷰맛집"];
 
 const VISIBILITY_OPTIONS: { key: PostVisibility; label: string; desc: string }[] = [
   { key: "public", label: "🌐 전체 공개", desc: "주변 모두에게 보여요" },
@@ -32,8 +33,21 @@ export default function NewPost() {
   const [tags, setTags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<PostVisibility>("public");
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [placeName, setPlaceName] = useState<string | null>(null);
+  const [placeCoords, setPlaceCoords] = useState<Coords | null>(null);
   const coords = useEffectiveCoords();
   const { mutateAsync, isPending } = useCreatePost();
+
+  // 위치 추가 화면에서 고른 장소 반영 (핀 좌표도 그 장소로)
+  const pickedPlace = usePlacePicker((s) => s.picked);
+  const setPickedPlace = usePlacePicker((s) => s.setPicked);
+  useEffect(() => {
+    if (pickedPlace) {
+      setPlaceName(pickedPlace.name);
+      setPlaceCoords({ lat: pickedPlace.lat, lng: pickedPlace.lng });
+      setPickedPlace(null);
+    }
+  }, [pickedPlace, setPickedPlace]);
 
   const toggleTag = (tag: string) =>
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -48,14 +62,16 @@ export default function NewPost() {
 
   const submit = async () => {
     try {
+      const pin = placeCoords ?? coords;
       await mutateAsync({
         body: body.trim(),
         tags,
         activity,
-        lat: coords.lat,
-        lng: coords.lng,
+        lat: pin.lat,
+        lng: pin.lng,
         imageUri,
         visibility,
+        placeName,
       });
       router.back();
     } catch (e) {
@@ -81,6 +97,32 @@ export default function NewPost() {
           {body.length}/{MAX_LEN} · 이 포스트는 현재 위치에 남고 24시간 후 사라져요
         </Text>
 
+        <Text style={styles.label}>위치 추가 (선택)</Text>
+        <Pressable
+          onPress={() => router.push("/safety/pick-location")}
+          style={({ pressed }) => [styles.locationRow, pressed && styles.locationRowPressed]}
+        >
+          <Text style={styles.locationPin}>📍</Text>
+          {placeName ? (
+            <Text style={styles.locationValue}>{placeName}</Text>
+          ) : (
+            <Text style={styles.locationPlaceholder}>장소 검색 · 미지정 시 현재 위치</Text>
+          )}
+          {placeName ? (
+            <Pressable
+              onPress={() => {
+                setPlaceName(null);
+                setPlaceCoords(null);
+              }}
+              hitSlop={10}
+            >
+              <Text style={styles.locationClear}>✕</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.locationChevron}>›</Text>
+          )}
+        </Pressable>
+
         <Text style={styles.label}>활동</Text>
         <View style={styles.chips}>
           {(Object.keys(ACTIVITY_LABELS) as Activity[]).map((key) => (
@@ -98,7 +140,7 @@ export default function NewPost() {
 
         <Text style={styles.label}>태그</Text>
         <View style={styles.chips}>
-          {PRESET_TAGS.map((tag) => (
+          {tagsForActivity(activity, tags).map((tag) => (
             <Pressable
               key={tag}
               onPress={() => toggleTag(tag)}
@@ -176,6 +218,22 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   counter: { ...typography.caption, color: colors.subtext, marginTop: spacing.sm },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  locationRowPressed: { backgroundColor: colors.surfaceHigh },
+  locationPin: { fontSize: 18 },
+  locationValue: { ...typography.body, fontSize: 16, color: colors.text, flex: 1 },
+  locationPlaceholder: { ...typography.body, fontSize: 15, color: colors.subtext, flex: 1 },
+  locationChevron: { ...typography.title, color: colors.subtext },
+  locationClear: { ...typography.body, color: colors.subtext, paddingHorizontal: spacing.xs },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: {
     backgroundColor: colors.surface,

@@ -24,6 +24,7 @@ const INITIAL_POSTS: Post[] = [
     visibility: "public",
     checkInId: null,
     joinedCount: 0,
+    placeName: null,
   },
   {
     id: "mock-2",
@@ -44,6 +45,7 @@ const INITIAL_POSTS: Post[] = [
     visibility: "public",
     checkInId: null,
     joinedCount: 0,
+    placeName: null,
   },
   {
     id: "mock-3",
@@ -64,6 +66,7 @@ const INITIAL_POSTS: Post[] = [
     visibility: "public",
     checkInId: null,
     joinedCount: 0,
+    placeName: null,
   },
 ];
 
@@ -80,8 +83,9 @@ export function addMockPost(input: {
   lng: number;
   imageUri?: string | null;
   visibility?: Post["visibility"];
+  placeName?: string | null;
 }): void {
-  const { imageUri, visibility, ...rest } = input;
+  const { imageUri, visibility, placeName, ...rest } = input;
   posts = [
     {
       id: `mock-${Date.now()}`,
@@ -97,6 +101,7 @@ export function addMockPost(input: {
       visibility: visibility ?? "public",
       checkInId: null,
       joinedCount: 0,
+      placeName: placeName ?? null,
       ...rest,
     },
     ...posts,
