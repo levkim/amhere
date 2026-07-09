@@ -55,6 +55,8 @@ function RootNav() {
             options={{ title: "프로필 편집", presentation: "modal" }}
           />
           <Stack.Screen name="profile/history" options={{ title: "내 활동 기록" }} />
+          <Stack.Screen name="profile/my-posts" options={{ title: "내 포스트" }} />
+          <Stack.Screen name="notifications" options={{ title: "알림" }} />
           <Stack.Screen
             name="safety/check-in"
             options={{ title: "안전 체크인", presentation: "modal" }}

@@ -5,6 +5,7 @@ import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/post-card";
+import { NotificationBell } from "@/components/notification-bell";
 import { LiveMap } from "@/components/map/live-map";
 import { useNearbyPosts } from "@/features/feed/hooks";
 import { useNearbyUsers } from "@/features/matching/hooks";
@@ -72,6 +73,10 @@ export default function MapHome() {
               ))}
             </View>
           </ScrollView>
+        </View>
+        {/* 알림함 (지도 우하단 플로팅) */}
+        <View style={styles.bellWrap}>
+          <NotificationBell floating />
         </View>
       </View>
 
@@ -179,6 +184,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceHigh,
   },
   filterOverlay: { position: "absolute", top: spacing.sm, left: 0, right: 0 },
+  bellWrap: { position: "absolute", right: spacing.md, bottom: spacing.md },
   filterChips: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md },
   chip: {
     backgroundColor: "rgba(15, 27, 45, 0.85)",

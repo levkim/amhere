@@ -14,16 +14,23 @@ import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Button } from "@/components/ui/button";
 import { useCreatePost } from "@/features/feed/hooks";
+import type { PostVisibility } from "@/features/feed/types";
 import { useEffectiveCoords } from "@/stores/location";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
 
 const MAX_LEN = 200;
 const PRESET_TAGS = ["설질좋음", "결빙주의", "혼잡", "크루모집", "초보환영", "뷰맛집"];
 
+const VISIBILITY_OPTIONS: { key: PostVisibility; label: string; desc: string }[] = [
+  { key: "public", label: "🌐 전체 공개", desc: "주변 모두에게 보여요" },
+  { key: "friends", label: "🤝 친구에게만", desc: "수락된 버디에게만 보여요" },
+];
+
 export default function NewPost() {
   const [body, setBody] = useState("");
   const [activity, setActivity] = useState<Activity>("ski");
   const [tags, setTags] = useState<string[]>([]);
+  const [visibility, setVisibility] = useState<PostVisibility>("public");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const coords = useEffectiveCoords();
   const { mutateAsync, isPending } = useCreatePost();
@@ -48,6 +55,7 @@ export default function NewPost() {
         lat: coords.lat,
         lng: coords.lng,
         imageUri,
+        visibility,
       });
       router.back();
     } catch (e) {
@@ -102,6 +110,24 @@ export default function NewPost() {
             </Pressable>
           ))}
         </View>
+
+        <Text style={styles.label}>공개 범위</Text>
+        <View style={styles.chips}>
+          {VISIBILITY_OPTIONS.map((opt) => (
+            <Pressable
+              key={opt.key}
+              onPress={() => setVisibility(opt.key)}
+              style={[styles.chip, visibility === opt.key && styles.chipActive]}
+            >
+              <Text style={[styles.chipText, visibility === opt.key && styles.chipTextActive]}>
+                {opt.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={styles.counter}>
+          {VISIBILITY_OPTIONS.find((o) => o.key === visibility)?.desc}
+        </Text>
 
         <Text style={styles.label}>사진 (선택)</Text>
         {imageUri ? (

@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import { useMyBuddyRequests, useMyUserId } from "@/features/matching/hooks";
-import { colors } from "@/theme/tokens";
+import { NotificationBell } from "@/components/notification-bell";
+import { colors, spacing } from "@/theme/tokens";
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.45 }}>{emoji}</Text>;
@@ -19,6 +20,11 @@ export default function TabsLayout() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.text,
+        headerRight: () => (
+          <View style={{ marginRight: spacing.sm }}>
+            <NotificationBell />
+          </View>
+        ),
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.subtext,

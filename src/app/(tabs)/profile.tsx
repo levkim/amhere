@@ -45,7 +45,7 @@ export default function Profile() {
               <View style={styles.statDivider} />
               <Stat value={stats?.checkins ?? 0} label="체크인" to="/profile/history" />
               <View style={styles.statDivider} />
-              <Stat value={stats?.posts ?? 0} label="포스트" to="/(tabs)/feed" />
+              <Stat value={stats?.posts ?? 0} label="포스트" to="/profile/my-posts" />
             </View>
           </View>
         </View>
