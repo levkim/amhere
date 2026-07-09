@@ -50,6 +50,9 @@ function RootNav() {
           <Stack.Screen name="chat/[requestId]" options={{ title: "채팅" }} />
           <Stack.Screen name="activity/[id]/participants" options={{ title: "참가신청 관리" }} />
           <Stack.Screen name="activity/[id]/chat" options={{ title: "단체 채팅" }} />
+          <Stack.Screen name="crew/new" options={{ title: "크루 만들기", presentation: "modal" }} />
+          <Stack.Screen name="crew/[id]/index" options={{ title: "크루" }} />
+          <Stack.Screen name="crew/[id]/chat" options={{ title: "크루 채팅" }} />
           <Stack.Screen name="user/[id]" options={{ title: "프로필" }} />
           <Stack.Screen
             name="profile/edit"
