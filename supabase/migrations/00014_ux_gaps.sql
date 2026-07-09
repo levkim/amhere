@@ -42,5 +42,9 @@ drop policy if exists "posts own readable" on posts;
 create policy "posts own readable" on posts
   for select to authenticated using (author_id = auth.uid());
 
--- 4) 알림함 실시간 반영
-alter publication supabase_realtime add table notifications;
+-- 4) 알림함 실시간 반영 (이미 추가돼 있으면 건너뜀)
+do $$
+begin
+  alter publication supabase_realtime add table notifications;
+exception when duplicate_object then null;
+end $$;
