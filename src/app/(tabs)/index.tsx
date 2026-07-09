@@ -45,7 +45,7 @@ export default function MapHome() {
   );
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} edges={["top"]}>
       <View style={styles.mapWrap}>
         <LiveMap center={coords} posts={filteredPosts ?? []} users={filteredUsers ?? []} />
         {/* 활동 필터 (지도 위 오버레이) */}

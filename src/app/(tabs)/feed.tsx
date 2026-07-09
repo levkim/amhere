@@ -33,7 +33,7 @@ export default function Feed() {
 
   if (isLoading) {
     return (
-      <Screen style={styles.center}>
+      <Screen style={styles.center} edges={["top"]}>
         <ActivityIndicator color={colors.primary} size="large" />
       </Screen>
     );
@@ -54,7 +54,7 @@ export default function Feed() {
   }
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} edges={["top"]}>
       {availableTags.length > 0 ? (
         <View style={styles.filterBar}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>

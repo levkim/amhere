@@ -31,7 +31,7 @@ export default function Profile() {
   const { data: badges } = useMyBadges();
 
   return (
-    <Screen>
+    <Screen edges={["top"]}>
       <Card style={styles.card}>
         {/* 아바타 + [닉네임 / 친구·체크인·포스트] 가로 헤더 */}
         <View style={styles.header}>

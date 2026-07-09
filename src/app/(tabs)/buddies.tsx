@@ -74,7 +74,7 @@ export default function Buddies() {
   const { data: requests } = useMyBuddyRequests();
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} edges={["top"]}>
       <FlatList
         data={requests}
         keyExtractor={(r) => r.id}
