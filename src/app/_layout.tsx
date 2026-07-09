@@ -6,6 +6,7 @@ import { queryClient } from "@/lib/query-client";
 import { usePushRegistration } from "@/features/notifications/use-push-registration";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useMyProfile } from "@/features/profile/hooks";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { isDemoMode } from "@/lib/supabase";
 import { useIsSignedIn, useSessionStore } from "@/stores/session";
 import { colors } from "@/theme/tokens";
@@ -91,7 +92,9 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RootNav />
+      <ErrorBoundary>
+        <RootNav />
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

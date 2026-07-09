@@ -38,8 +38,9 @@ export function useInbox() {
 
   useEffect(() => {
     if (!supabase || !session) return;
+    // 채널명을 고유하게 (탭 전환 시 두 벨이 동시에 마운트돼도 토픽 충돌 없음)
     const channel = supabase
-      .channel(`inbox:${session.user.id}`)
+      .channel(`inbox:${session.user.id}:${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
