@@ -8,6 +8,9 @@ type Props = {
   center: Coords;
   posts: Post[];
   users: NearbyUser[];
+  /** 네이티브와 시그니처 통일용 (웹에서는 미사용) */
+  onPostPress?: (post: Post) => void;
+  onUserPress?: (user: NearbyUser) => void;
 };
 
 // 웹에서는 Mapbox 네이티브 지도를 쓸 수 없어 안내 화면을 보여준다.

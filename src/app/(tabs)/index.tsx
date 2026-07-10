@@ -8,7 +8,9 @@ import { PostCard } from "@/components/post-card";
 import { NotificationBell } from "@/components/notification-bell";
 import { LiveMap } from "@/components/map/live-map";
 import { useNearbyPosts } from "@/features/feed/hooks";
+import type { Post } from "@/features/feed/types";
 import { useNearbyUsers } from "@/features/matching/hooks";
+import type { NearbyUser } from "@/features/matching/types";
 import { useCurrentLocation } from "@/features/location/use-current-location";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { formatCountdown, useNow } from "@/features/safety/use-now";
@@ -34,6 +36,10 @@ export default function MapHome() {
   // 예약 카운트다운일 때만 1초 틱, 그 외엔 느리게 (배터리 절약)
   const now = useNow(activeCheckIn?.state === "scheduled" ? 1000 : 60_000);
   const [activityFilter, setActivityFilter] = useState<Activity | null>(null);
+  // 핀 탭 → 미리보기 카드 (Google Maps 방식)
+  const [preview, setPreview] = useState<
+    { type: "post"; post: Post } | { type: "user"; user: NearbyUser } | null
+  >(null);
 
   const filteredPosts = useMemo(
     () => (activityFilter ? (posts ?? []).filter((p) => p.activity === activityFilter) : posts),
@@ -47,7 +53,13 @@ export default function MapHome() {
   return (
     <Screen padded={false} edges={["top"]}>
       <View style={styles.mapWrap}>
-        <LiveMap center={coords} posts={filteredPosts ?? []} users={filteredUsers ?? []} />
+        <LiveMap
+          center={coords}
+          posts={filteredPosts ?? []}
+          users={filteredUsers ?? []}
+          onPostPress={(post) => setPreview({ type: "post", post })}
+          onUserPress={(user) => setPreview({ type: "user", user })}
+        />
         {/* 활동 필터 (지도 위 오버레이) */}
         <View style={styles.filterOverlay}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -74,10 +86,62 @@ export default function MapHome() {
             </View>
           </ScrollView>
         </View>
-        {/* 알림함 (지도 우하단 플로팅) */}
-        <View style={styles.bellWrap}>
-          <NotificationBell floating />
-        </View>
+        {/* 알림함 (지도 우하단 플로팅) — 미리보기 열려 있을 땐 숨김 */}
+        {!preview ? (
+          <View style={styles.bellWrap}>
+            <NotificationBell floating />
+          </View>
+        ) : null}
+
+        {/* 핀 미리보기 카드 */}
+        {preview ? (
+          <View style={styles.previewCard}>
+            <Pressable onPress={() => setPreview(null)} style={styles.previewClose} hitSlop={10}>
+              <Text style={styles.previewCloseText}>✕</Text>
+            </Pressable>
+            {preview.type === "post" ? (
+              <Pressable
+                onPress={() => {
+                  const id = preview.post.id;
+                  setPreview(null);
+                  router.push(`/post/${id}`);
+                }}
+              >
+                <Text style={styles.previewTitle} numberOfLines={1}>
+                  {preview.post.placeName ? `📍 ${preview.post.placeName}` : preview.post.nickname}
+                </Text>
+                <Text style={styles.previewBody} numberOfLines={2}>
+                  {preview.post.body}
+                </Text>
+                <Text style={styles.previewMeta}>
+                  {preview.post.nickname}
+                  {preview.post.tags.includes("체크인") ? " · 🏔️ 아웃도어 활동" : ""}
+                  {preview.post.joinedCount > 0 ? ` · 🙋 ${preview.post.joinedCount}명` : ""}
+                  {"  →  자세히"}
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  const id = preview.user.userId;
+                  setPreview(null);
+                  router.push(`/user/${id}`);
+                }}
+              >
+                <Text style={styles.previewTitle} numberOfLines={1}>
+                  {preview.user.isFriend ? "🤝 " : ""}
+                  {preview.user.nickname}
+                </Text>
+                <Text style={styles.previewMeta}>
+                  Lv.{preview.user.level}
+                  {preview.user.activity ? ` · ${ACTIVITY_LABELS[preview.user.activity]}` : ""}
+                  {preview.user.isFriend ? " · 친구" : " · 대략 위치"}
+                  {"  →  프로필 보기"}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        ) : null}
       </View>
 
       <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent}>
@@ -191,6 +255,23 @@ const styles = StyleSheet.create({
   },
   filterOverlay: { position: "absolute", top: spacing.sm, left: 0, right: 0 },
   bellWrap: { position: "absolute", right: spacing.md, bottom: spacing.md },
+  previewCard: {
+    position: "absolute",
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    padding: spacing.md,
+    gap: 4,
+  },
+  previewClose: { position: "absolute", top: 8, right: 10, zIndex: 1 },
+  previewCloseText: { ...typography.body, color: colors.subtext },
+  previewTitle: { ...typography.heading, fontSize: 16, color: colors.text, paddingRight: 24 },
+  previewBody: { ...typography.body, color: colors.subtext, lineHeight: 20 },
+  previewMeta: { ...typography.caption, color: colors.accent, fontWeight: "700", marginTop: 2 },
   filterChips: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md },
   chip: {
     backgroundColor: "rgba(15, 27, 45, 0.85)",
