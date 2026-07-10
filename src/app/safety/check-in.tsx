@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { useMyContacts } from "@/features/safety/contacts";
 import { useMyBuddies } from "@/features/activity/hooks";
+import { useMyJoinedCrews } from "@/features/crew/hooks";
 import { usePlacePicker } from "@/features/places/store";
 import { CHECKIN_TAGS } from "@/features/safety/tags";
 import { useCreatePost } from "@/features/feed/hooks";
@@ -76,11 +77,13 @@ export default function CheckIn() {
   const [myTags, setMyTags] = useState<string[]>([]);
   // 즉시 시작은 전체 공개, 예약(미래)은 안전을 위해 친구에게만이 기본값
   const [shareScope, setShareScope] = useState<ShareScope>("public");
+  const [crewId, setCrewId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
   const { data: contacts } = useMyContacts();
   const { data: buddies } = useMyBuddies();
+  const { data: myCrews } = useMyJoinedCrews();
   const { mutateAsync: createPost } = useCreatePost();
   const coords = useEffectiveCoords();
 
@@ -199,6 +202,7 @@ export default function CheckIn() {
             visibility: effectiveScope,
             // 실제 체크인 id일 때만 연결 (참가신청 대상)
             checkInId: checkInId && !checkInId.startsWith("local-") ? checkInId : null,
+            crewId,
           });
         } catch (e) {
           console.warn("share-to-feed failed:", e);
@@ -439,6 +443,33 @@ export default function CheckIn() {
             아직 버디가 없어요. 버디를 맺으면 여기서 지킴이로 지정할 수 있어요.
           </Text>
         )}
+
+        {myCrews && myCrews.length > 0 ? (
+          <>
+            <Text style={styles.sectionTitle}>크루 활동으로</Text>
+            <View style={styles.options}>
+              <Pressable
+                onPress={() => setCrewId(null)}
+                style={[styles.option, crewId === null && styles.optionActive]}
+              >
+                <Text style={[styles.optionText, crewId === null && styles.optionTextActive]}>
+                  안 함
+                </Text>
+              </Pressable>
+              {myCrews.map((c) => (
+                <Pressable
+                  key={c.id}
+                  onPress={() => setCrewId(c.id)}
+                  style={[styles.option, crewId === c.id && styles.optionActive]}
+                >
+                  <Text style={[styles.optionText, crewId === c.id && styles.optionTextActive]}>
+                    {c.emoji} {c.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.sectionTitle}>공개 범위</Text>
         <View style={styles.options}>

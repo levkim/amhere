@@ -45,4 +45,6 @@ export type NewPost = {
   checkInId?: string | null;
   /** 위치 추가 장소명 (선택) */
   placeName?: string | null;
+  /** 크루 활동으로 공유 시 크루 id (선택) */
+  crewId?: string | null;
 };

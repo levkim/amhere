@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useCreatePost } from "@/features/feed/hooks";
 import { tagsForActivity } from "@/features/feed/post-tags";
 import type { PostVisibility } from "@/features/feed/types";
+import { useMyJoinedCrews } from "@/features/crew/hooks";
 import { usePlacePicker } from "@/features/places/store";
 import { useEffectiveCoords, type Coords } from "@/stores/location";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
@@ -35,8 +36,10 @@ export default function NewPost() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [placeName, setPlaceName] = useState<string | null>(null);
   const [placeCoords, setPlaceCoords] = useState<Coords | null>(null);
+  const [crewId, setCrewId] = useState<string | null>(null);
   const coords = useEffectiveCoords();
   const { mutateAsync, isPending } = useCreatePost();
+  const { data: myCrews } = useMyJoinedCrews();
 
   // 위치 추가 화면에서 고른 장소 반영 (핀 좌표도 그 장소로)
   const pickedPlace = usePlacePicker((s) => s.picked);
@@ -72,6 +75,7 @@ export default function NewPost() {
         imageUri,
         visibility,
         placeName,
+        crewId,
       });
       router.back();
     } catch (e) {
@@ -152,6 +156,36 @@ export default function NewPost() {
             </Pressable>
           ))}
         </View>
+
+        {myCrews && myCrews.length > 0 ? (
+          <>
+            <Text style={styles.label}>크루 활동으로 공유 (선택)</Text>
+            <View style={styles.chips}>
+              <Pressable
+                onPress={() => setCrewId(null)}
+                style={[styles.chip, crewId === null && styles.chipActive]}
+              >
+                <Text style={[styles.chipText, crewId === null && styles.chipTextActive]}>
+                  안 함
+                </Text>
+              </Pressable>
+              {myCrews.map((c) => (
+                <Pressable
+                  key={c.id}
+                  onPress={() => setCrewId(c.id)}
+                  style={[styles.chip, crewId === c.id && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, crewId === c.id && styles.chipTextActive]}>
+                    {c.emoji} {c.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            {crewId ? (
+              <Text style={styles.counter}>크루원에게 알림이 가고 크루 활동에 기록돼요.</Text>
+            ) : null}
+          </>
+        ) : null}
 
         <Text style={styles.label}>공개 범위</Text>
         <View style={styles.chips}>

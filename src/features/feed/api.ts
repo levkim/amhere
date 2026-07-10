@@ -114,6 +114,7 @@ export async function createPost(post: NewPost): Promise<void> {
     visibility: post.visibility ?? "public",
     check_in_id: post.checkInId ?? null,
     place_name: post.placeName ?? null,
+    crew_id: post.crewId ?? null,
     location: `POINT(${post.lng} ${post.lat})`,
   });
   if (error) throw new Error(error.message);

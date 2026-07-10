@@ -9,13 +9,57 @@ import { Avatar } from "@/components/profile-bits";
 import {
   useCrew,
   useCrewMembers,
+  useCrewPosts,
   useJoinCrew,
   useLeaveCrew,
   useRespondCrewMember,
 } from "@/features/crew/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
-import type { CrewMember } from "@/features/crew/api";
-import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
+import type { CrewMember, CrewPost } from "@/features/crew/api";
+import { ACTIVITY_LABELS, colors, radius, spacing, typography } from "@/theme/tokens";
+
+function timeAgo(iso: string): string {
+  const mins = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (mins < 60) return `${mins}분 전`;
+  const h = Math.round(mins / 60);
+  return h < 24 ? `${h}시간 전` : `${Math.round(h / 24)}일 전`;
+}
+
+function CrewActivityRow({ post }: { post: CrewPost }) {
+  return (
+    <View style={styles.actRow}>
+      <Avatar url={post.avatarUrl} size={36} />
+      <View style={styles.actInfo}>
+        <Text style={styles.actHead}>
+          <Text style={styles.actName}>{post.nickname}</Text>
+          <Text style={styles.actTime}> · {timeAgo(post.createdAt)}</Text>
+        </Text>
+        {post.placeName ? <Text style={styles.actPlace}>📍 {post.placeName}</Text> : null}
+        <Text style={styles.actBody} numberOfLines={3}>
+          {post.body}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function CrewActivity({ crewId }: { crewId: string }) {
+  const { data: posts } = useCrewPosts(crewId);
+  if (!posts || posts.length === 0) {
+    return (
+      <Text style={styles.noActivity}>
+        아직 크루 활동이 없어요. 체크인·포스트를 &lsquo;크루 활동으로&rsquo; 올려보세요.
+      </Text>
+    );
+  }
+  return (
+    <Card style={styles.actCard}>
+      {posts.slice(0, 5).map((p) => (
+        <CrewActivityRow key={p.id} post={p} />
+      ))}
+    </Card>
+  );
+}
 
 function MemberRow({
   member,
@@ -137,6 +181,14 @@ export default function CrewHome() {
                 />
               )}
             </Card>
+
+            {isMember ? (
+              <>
+                <Text style={styles.sectionTitle}>크루 활동</Text>
+                <CrewActivity crewId={crewId} />
+              </>
+            ) : null}
+
             <Text style={styles.sectionTitle}>멤버</Text>
           </>
         }
@@ -170,7 +222,27 @@ const styles = StyleSheet.create({
   },
   badges: { flexDirection: "row", gap: spacing.sm, marginVertical: spacing.sm },
   pendingNote: { ...typography.body, color: colors.warn, marginTop: spacing.sm },
-  sectionTitle: { ...typography.heading, color: colors.text, marginBottom: spacing.sm },
+  sectionTitle: {
+    ...typography.heading,
+    color: colors.text,
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  actCard: { gap: spacing.md, marginBottom: spacing.md },
+  actRow: { flexDirection: "row", gap: spacing.sm, alignItems: "flex-start" },
+  actInfo: { flex: 1, gap: 2 },
+  actHead: { ...typography.caption },
+  actName: { color: colors.text, fontWeight: "700" },
+  actTime: { color: colors.subtext },
+  actPlace: { ...typography.caption, color: colors.accent, fontWeight: "700" },
+  actBody: { ...typography.body, color: colors.text, lineHeight: 20 },
+  noActivity: {
+    ...typography.body,
+    color: colors.subtext,
+    textAlign: "center",
+    paddingVertical: spacing.md,
+    lineHeight: 20,
+  },
   memberRow: {
     flexDirection: "row",
     alignItems: "center",

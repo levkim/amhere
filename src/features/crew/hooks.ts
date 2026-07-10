@@ -6,7 +6,9 @@ import {
   createCrew,
   fetchCrewMembers,
   fetchCrewMessages,
+  fetchCrewPosts,
   fetchCrews,
+  fetchMyJoinedCrews,
   joinCrew,
   leaveCrew,
   respondCrewMember,
@@ -16,6 +18,20 @@ import {
 
 export function useCrews() {
   return useQuery({ queryKey: ["crews"], queryFn: fetchCrews });
+}
+
+/** 내가 가입한 크루 (크루 활동 공유 선택기용) */
+export function useMyJoinedCrews() {
+  return useQuery({ queryKey: ["my-joined-crews"], queryFn: fetchMyJoinedCrews });
+}
+
+/** 크루 활동 피드 */
+export function useCrewPosts(crewId: string) {
+  return useQuery({
+    queryKey: ["crew-posts", crewId],
+    queryFn: () => fetchCrewPosts(crewId),
+    enabled: !!crewId,
+  });
 }
 
 export function useCrew(crewId: string) {

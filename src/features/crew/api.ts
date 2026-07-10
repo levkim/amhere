@@ -190,3 +190,45 @@ export async function sendCrewMessage(crewId: string, body: string): Promise<voi
     .insert({ crew_id: crewId, sender_id: user.id, body });
   if (error) throw new Error(error.message);
 }
+
+export type CrewPost = {
+  id: string;
+  authorId: string;
+  nickname: string;
+  avatarUrl: string | null;
+  body: string;
+  imageUrl: string | null;
+  tags: string[];
+  activity: Activity | null;
+  placeName: string | null;
+  createdAt: string;
+  checkInId: string | null;
+};
+
+/** 크루 활동 피드 (크루원만) */
+export async function fetchCrewPosts(crewId: string): Promise<CrewPost[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc("crew_posts", { cid: crewId });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    authorId: r.author_id,
+    nickname: r.nickname,
+    avatarUrl: r.avatar_url,
+    body: r.body,
+    imageUrl: r.image_url,
+    tags: r.tags ?? [],
+    activity: r.activity,
+    placeName: r.place_name,
+    createdAt: r.created_at,
+    checkInId: r.check_in_id,
+  }));
+}
+
+/** 크루 활동으로 공유할 수 있는, 내가 가입한 크루 목록 (선택기용) */
+export async function fetchMyJoinedCrews(): Promise<{ id: string; name: string; emoji: string }[]> {
+  const crews = await fetchCrews();
+  return crews
+    .filter((c) => c.myStatus === "accepted")
+    .map((c) => ({ id: c.id, name: c.name, emoji: c.emoji }));
+}
