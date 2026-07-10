@@ -7,17 +7,30 @@ import { useCreateCrew } from "@/features/crew/hooks";
 import type { JoinMode } from "@/features/crew/api";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography, type Activity } from "@/theme/tokens";
 
-const EMOJIS = ["🏔️", "⛷️", "🏂", "🥾", "🏃", "🚵", "🚴", "🎒", "🔥", "🌲"];
+const EMOJIS = [
+  "🏔️", "⛷️", "🏂", "🥾", "🏃", "🚵", "🚴", "🎒", "🔥", "🌲",
+  "⛺", "🧗", "🏕️", "🌄", "❄️", "☀️", "🌊", "🍁", "🐺", "🦌",
+];
+const MAX_EMOJIS = 3;
 
 export default function NewCrew() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [activity, setActivity] = useState<Activity | null>(null);
   const [region, setRegion] = useState("");
-  const [emoji, setEmoji] = useState("🏔️");
+  const [emojis, setEmojis] = useState<string[]>(["🏔️"]);
   const [joinMode, setJoinMode] = useState<JoinMode>("open");
 
   const { mutateAsync, isPending } = useCreateCrew();
+
+  const toggleEmoji = (e: string) =>
+    setEmojis((prev) =>
+      prev.includes(e)
+        ? prev.filter((x) => x !== e)
+        : prev.length < MAX_EMOJIS
+          ? [...prev, e]
+          : prev,
+    );
 
   const submit = async () => {
     try {
@@ -26,7 +39,7 @@ export default function NewCrew() {
         description: description.trim() || null,
         activity,
         region: region.trim() || null,
-        emoji,
+        emoji: emojis.join("") || "🏔️",
         joinMode,
       });
       router.dismissTo(`/crew/${crewId}`);
@@ -49,17 +62,24 @@ export default function NewCrew() {
           autoFocus
         />
 
-        <Text style={styles.label}>대표 이모지</Text>
+        <Text style={styles.label}>대표 이모지 (최대 {MAX_EMOJIS}개)</Text>
+        <View style={styles.previewRow}>
+          <Text style={styles.preview}>{emojis.join("") || "🏔️"}</Text>
+          <Text style={styles.hint}>골라서 조합할 수 있어요 · 순서대로 표시</Text>
+        </View>
         <View style={styles.chips}>
-          {EMOJIS.map((e) => (
-            <Pressable
-              key={e}
-              onPress={() => setEmoji(e)}
-              style={[styles.emojiChip, emoji === e && styles.chipActive]}
-            >
-              <Text style={styles.emojiText}>{e}</Text>
-            </Pressable>
-          ))}
+          {EMOJIS.map((e) => {
+            const on = emojis.includes(e);
+            return (
+              <Pressable
+                key={e}
+                onPress={() => toggleEmoji(e)}
+                style={[styles.emojiChip, on && styles.chipActive]}
+              >
+                <Text style={styles.emojiText}>{e}</Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Text style={styles.label}>대표 활동 (선택)</Text>
@@ -173,6 +193,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emojiText: { fontSize: 22 },
+  previewRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginBottom: spacing.sm },
+  preview: { fontSize: 30 },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { ...typography.body, color: colors.subtext },
   chipTextActive: { color: colors.invert, fontWeight: "700" },
