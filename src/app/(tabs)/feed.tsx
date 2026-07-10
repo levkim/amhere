@@ -12,23 +12,37 @@ import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PostCard } from "@/components/post-card";
+import { UpcomingActivities } from "@/components/upcoming-activities";
 import { useNearbyPosts } from "@/features/feed/hooks";
+import type { Post } from "@/features/feed/types";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
+
+/** 예약(미래 시작) 체크인 포스트 여부 → 상단 '다가오는 활동'으로 분리 */
+function isUpcoming(p: Post): boolean {
+  return (
+    p.scheduledStartAt !== null &&
+    new Date(p.scheduledStartAt).getTime() > Date.now() &&
+    p.tags.includes("예정")
+  );
+}
 
 export default function Feed() {
   const { data: posts, isLoading, isError, refetch, isRefetching } = useNearbyPosts();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
+  // '지금' 피드 = 예정 활동을 뺀 나머지 (예정은 상단 카러셀로)
+  const current = useMemo(() => (posts ?? []).filter((p) => !isUpcoming(p)), [posts]);
+
   // 현재 피드에 존재하는 태그만 필터 후보로 노출
   const availableTags = useMemo(() => {
     const tags = new Set<string>();
-    (posts ?? []).forEach((p) => p.tags.forEach((t) => tags.add(t)));
+    current.forEach((p) => p.tags.forEach((t) => tags.add(t)));
     return [...tags];
-  }, [posts]);
+  }, [current]);
 
   const filtered = useMemo(
-    () => (selectedTag ? (posts ?? []).filter((p) => p.tags.includes(selectedTag)) : posts),
-    [posts, selectedTag],
+    () => (selectedTag ? current.filter((p) => p.tags.includes(selectedTag)) : current),
+    [current, selectedTag],
   );
 
   if (isLoading) {
@@ -91,9 +105,12 @@ export default function Feed() {
         refreshing={isRefetching}
         onRefresh={refetch}
         ListHeaderComponent={
-          <Text style={styles.freshness}>
-            포스트는 48시간 후 피드에서 내려가요 — 지금의 정보만. (내 글은 프로필에 보관돼요)
-          </Text>
+          <>
+            <UpcomingActivities posts={posts ?? []} />
+            <Text style={styles.freshness}>
+              포스트는 48시간 후 피드에서 내려가요 — 지금의 정보만. (내 글은 프로필에 보관돼요)
+            </Text>
+          </>
         }
         ListEmptyComponent={
           selectedTag ? (

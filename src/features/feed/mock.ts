@@ -25,6 +25,7 @@ const INITIAL_POSTS: Post[] = [
     checkInId: null,
     joinedCount: 0,
     placeName: null,
+    scheduledStartAt: null,
   },
   {
     id: "mock-2",
@@ -46,6 +47,7 @@ const INITIAL_POSTS: Post[] = [
     checkInId: null,
     joinedCount: 0,
     placeName: null,
+    scheduledStartAt: null,
   },
   {
     id: "mock-3",
@@ -67,6 +69,7 @@ const INITIAL_POSTS: Post[] = [
     checkInId: null,
     joinedCount: 0,
     placeName: null,
+    scheduledStartAt: null,
   },
 ];
 
@@ -102,6 +105,7 @@ export function addMockPost(input: {
       checkInId: null,
       joinedCount: 0,
       placeName: placeName ?? null,
+      scheduledStartAt: null,
       ...rest,
     },
     ...posts,

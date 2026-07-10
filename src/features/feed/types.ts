@@ -26,6 +26,8 @@ export type Post = {
   joinedCount: number;
   /** 위치 추가로 지정한 장소명. 없으면 null */
   placeName: string | null;
+  /** 연결된 체크인이 예약(미래 시작)이면 그 시작 시각. 아니면 null */
+  scheduledStartAt: string | null;
 };
 
 /** 공개 범위: 전체 공개 / 친구에게만 (비공개는 포스트 자체를 안 만듦) */

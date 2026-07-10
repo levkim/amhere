@@ -165,11 +165,17 @@ export default function MapHome() {
           )}
         </Card>
 
-        {/* 주변 소식 미리보기 */}
+        {/* 주변 소식 미리보기 ('지금' = 예정 활동 제외) */}
         <Text style={styles.sectionTitle}>지금 주변에서</Text>
-        {(posts ?? []).slice(0, 3).map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
+        {(posts ?? [])
+          .filter(
+            (p) =>
+              !(p.scheduledStartAt && new Date(p.scheduledStartAt).getTime() > Date.now()),
+          )
+          .slice(0, 3)
+          .map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
       </ScrollView>
     </Screen>
   );

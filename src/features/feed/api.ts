@@ -36,6 +36,7 @@ export async function fetchNearbyPosts(coords: Coords): Promise<Post[]> {
     checkInId: row.check_in_id ?? null,
     joinedCount: Number(row.joined_count ?? 0),
     placeName: row.place_name ?? null,
+    scheduledStartAt: row.scheduled_start_at ?? null,
   }));
 }
 
