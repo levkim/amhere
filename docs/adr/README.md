@@ -67,6 +67,6 @@
 | [0013](0013-feed-blended-ranking.md) | 피드 정렬: 혼합 점수(최신성+근접성) | 채택 |
 | [0014](0014-notification-inbox.md) | 알림함: send_expo_push에서 DB 기록 | 채택 |
 | [0015](0015-post-place-and-tags.md) | 새 포스트: 위치 추가 + 활동별 태그 | 채택 |
-| [0016](0016-upcoming-activities-feed.md) | 피드 '다가오는 활동' 분리 | 채택 |
 | [0016](0016-crews.md) | 크루(그룹): 지속 모임 + 크루장 선택제 가입 | 채택 |
 | [0017](0017-crew-activities.md) | 크루 활동 연결 | 채택 |
+| [0018](0018-upcoming-activities-feed.md) | 피드 '다가오는 활동' 분리 | 채택 |
