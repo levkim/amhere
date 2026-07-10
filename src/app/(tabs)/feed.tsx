@@ -91,7 +91,9 @@ export default function Feed() {
         refreshing={isRefetching}
         onRefresh={refetch}
         ListHeaderComponent={
-          <Text style={styles.freshness}>모든 포스트는 24시간 후 사라져요 — 지금의 정보만.</Text>
+          <Text style={styles.freshness}>
+            포스트는 48시간 후 피드에서 내려가요 — 지금의 정보만. (내 글은 프로필에 보관돼요)
+          </Text>
         }
         ListEmptyComponent={
           selectedTag ? (

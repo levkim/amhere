@@ -98,7 +98,7 @@ export default function NewPost() {
           autoFocus
         />
         <Text style={styles.counter}>
-          {body.length}/{MAX_LEN} · 이 포스트는 현재 위치에 남고 24시간 후 사라져요
+          {body.length}/{MAX_LEN} · 현재 위치에 남고 48시간 후 피드에서 내려가요 (내 글은 보관돼요)
         </Text>
 
         <Text style={styles.label}>위치 추가 (선택)</Text>

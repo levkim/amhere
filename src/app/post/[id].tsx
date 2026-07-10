@@ -53,7 +53,7 @@ export default function PostDetail() {
         <EmptyState
           emoji="⏳"
           title="사라진 포스트예요"
-          description="포스트는 24시간 후 자동으로 만료돼요."
+          description="포스트는 48시간 후 피드에서 내려가요. 내 글은 프로필에서 볼 수 있어요."
         />
       </Screen>
     );
