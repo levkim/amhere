@@ -225,8 +225,14 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id", active.id);
       if (error) throw new Error(error.message);
+
+      // 예약을 취소했으니 피드에 올라간 '예정' 안내 포스트도 삭제한다
+      // → '다가오는 활동' 카루셀과 피드에서 함께 사라진다 (RLS: 본인 포스트만)
+      await supabase.from("posts").delete().eq("check_in_id", active.id);
     }
     cancelNotifs(active.notifIds);
+    // 피드 갱신 → 카루셀에서 자동 제거
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
     set({ active: null });
   },
 
