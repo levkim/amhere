@@ -73,3 +73,4 @@
 | [0019](0019-archive-highlights.md) | 보관함+하이라이트 / 예약 취소 가드 | 채택 |
 | [0020](0020-activity-tracking-sentry.md) | 백그라운드 경로 트래킹 + Sentry 크래시 리포팅 | 채택 |
 | [0021](0021-crew-disband.md) | 크루 폭파: 멤버 전원 퇴장 후에만 (서버 강제) | 채택 |
+| [0022](0022-signup-flow.md) | 가입 플로우: 전화+Google, 일괄 약관 동의, 탈퇴 RPC | 채택 |
