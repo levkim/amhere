@@ -10,6 +10,7 @@ import type {
 import {
   addMockMessage,
   addMockRequest,
+  deleteMockRequest,
   getMockMessages,
   getMockRequests,
   MOCK_NEARBY_USERS,
@@ -92,6 +93,16 @@ export async function respondToRequest(id: string, status: BuddyStatus): Promise
     .from("buddy_requests")
     .update({ status, responded_at: new Date().toISOString() })
     .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** 죽은 요청(거절됨/취소됨) 삭제 — RLS가 당사자·해당 상태만 허용 */
+export async function deleteBuddyRequest(id: string): Promise<void> {
+  if (!supabase) {
+    deleteMockRequest(id);
+    return;
+  }
+  const { error } = await supabase.from("buddy_requests").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 

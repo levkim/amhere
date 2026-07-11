@@ -1,11 +1,16 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useMyBuddyRequests, useMyUserId, useRespondToRequest } from "@/features/matching/hooks";
+import {
+  useDeleteBuddyRequest,
+  useMyBuddyRequests,
+  useMyUserId,
+  useRespondToRequest,
+} from "@/features/matching/hooks";
 import type { BuddyRequest } from "@/features/matching/types";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
@@ -19,9 +24,19 @@ const STATUS_LABELS: Record<BuddyRequest["status"], string> = {
 function RequestCard({ request }: { request: BuddyRequest }) {
   const myId = useMyUserId();
   const { mutate: respond, isPending } = useRespondToRequest();
+  const { mutate: remove, isPending: removing } = useDeleteBuddyRequest();
 
   const incoming = request.addresseeId === myId;
   const counterpart = incoming ? request.requesterNickname : request.addresseeNickname;
+  // 거절됨/취소됨 = 죽은 요청 → 목록에서 삭제 가능
+  const deletable = request.status === "declined" || request.status === "cancelled";
+
+  const onDelete = () => {
+    Alert.alert("요청 삭제", "이 요청을 목록에서 삭제할까요?", [
+      { text: "취소", style: "cancel" },
+      { text: "삭제", style: "destructive", onPress: () => remove(request.id) },
+    ]);
+  };
 
   return (
     <Card style={styles.card}>
@@ -29,10 +44,17 @@ function RequestCard({ request }: { request: BuddyRequest }) {
         <Text style={styles.nickname}>
           {counterpart} {incoming ? "" : "(보낸 요청)"}
         </Text>
-        <Tag
-          label={STATUS_LABELS[request.status]}
-          tone={request.status === "accepted" ? "accent" : "default"}
-        />
+        <View style={styles.headerRight}>
+          <Tag
+            label={STATUS_LABELS[request.status]}
+            tone={request.status === "accepted" ? "accent" : "default"}
+          />
+          {deletable ? (
+            <Pressable onPress={onDelete} disabled={removing} hitSlop={8} style={styles.deleteBtn}>
+              <Text style={styles.deleteText}>✕</Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
       <Text style={styles.meta}>
         {ACTIVITY_LABELS[request.activity]} · {request.region} · {request.plannedDate}
@@ -104,6 +126,16 @@ const styles = StyleSheet.create({
   findCta: { marginBottom: spacing.md },
   card: { marginBottom: spacing.sm + 4, gap: spacing.sm },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  deleteBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.surfaceHigh,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteText: { ...typography.caption, color: colors.subtext, fontWeight: "700" },
   nickname: { ...typography.heading, color: colors.text },
   meta: { ...typography.caption, color: colors.subtext },
   message: { ...typography.body, color: colors.text, lineHeight: 21 },

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/stores/session";
 import { useEffectiveCoords } from "@/stores/location";
 import {
+  deleteBuddyRequest,
   fetchMessages,
   fetchMyBuddyRequests,
   fetchNearbyUsers,
@@ -47,6 +48,14 @@ export function useRespondToRequest() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: BuddyStatus }) =>
       respondToRequest(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["matches"] }),
+  });
+}
+
+/** 거절됨/취소됨 요청 목록에서 삭제 */
+export function useDeleteBuddyRequest() {
+  return useMutation({
+    mutationFn: (id: string) => deleteBuddyRequest(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["matches"] }),
   });
 }

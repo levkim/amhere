@@ -46,6 +46,10 @@ export function setMockRequestStatus(id: string, status: BuddyStatus): void {
   requests = requests.map((r) => (r.id === id ? { ...r, status } : r));
 }
 
+export function deleteMockRequest(id: string): void {
+  requests = requests.filter((r) => r.id !== id);
+}
+
 // 데모 좌표: 용평리조트 주변에 가상 위치를 흩어 배치
 export const MOCK_NEARBY_USERS: NearbyUser[] = [
   {
