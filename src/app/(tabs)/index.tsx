@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import type { Post } from "@/features/feed/types";
 import { useNearbyUsers } from "@/features/matching/hooks";
 import type { NearbyUser } from "@/features/matching/types";
 import { useCurrentLocation } from "@/features/location/use-current-location";
+import { useParticipants } from "@/features/activity/hooks";
 import { useSafetyStore } from "@/features/safety/hooks";
 import { formatCountdown, useNow } from "@/features/safety/use-now";
 import { useEffectiveCoords } from "@/stores/location";
@@ -40,6 +41,47 @@ export default function MapHome() {
   const [preview, setPreview] = useState<
     { type: "post"; post: Post } | { type: "user"; user: NearbyUser } | null
   >(null);
+
+  // 예약 체크인의 동행 신청자 (대기/수락) — 있으면 예약 취소 불가
+  const isScheduled = activeCheckIn?.state === "scheduled";
+  const { data: participants } = useParticipants(isScheduled ? activeCheckIn.id : "");
+  const applicants = (participants ?? []).filter(
+    (p) => p.status === "pending" || p.status === "accepted",
+  );
+  const startReached =
+    isScheduled && now >= new Date(activeCheckIn.scheduledStartAt).getTime();
+
+  const onCancelScheduled = () => {
+    if (!activeCheckIn) return;
+    if (applicants.length > 0) {
+      Alert.alert(
+        "취소할 수 없어요",
+        `동행 신청자 ${applicants.length}명이 있어요. 신청자가 모두 나간 후에 취소할 수 있어요.`,
+        [
+          { text: "확인", style: "cancel" },
+          {
+            text: "참가신청 관리",
+            onPress: () => router.push(`/activity/${activeCheckIn.id}/participants`),
+          },
+        ],
+      );
+      return;
+    }
+    Alert.alert("예약 취소", "이 예약을 취소할까요?", [
+      { text: "아니요", style: "cancel" },
+      {
+        text: "예약 취소",
+        style: "destructive",
+        onPress: () =>
+          useSafetyStore
+            .getState()
+            .cancelScheduled()
+            .catch((e) =>
+              Alert.alert("취소 실패", e instanceof Error ? e.message : "다시 시도해 주세요."),
+            ),
+      },
+    ]);
+  };
 
   const filteredPosts = useMemo(
     () => (activityFilter ? (posts ?? []).filter((p) => p.activity === activityFilter) : posts),
@@ -169,21 +211,32 @@ export default function MapHome() {
                   {formatCountdown(new Date(activeCheckIn.scheduledStartAt).getTime() - now)}
                 </Text>
               </View>
-              <View style={styles.safetyActions}>
-                <View style={styles.safetyActionBtn}>
-                  <Button
-                    label="지금 시작"
-                    onPress={() => useSafetyStore.getState().confirmStart()}
-                  />
+              {startReached ? (
+                // 예정 시각 도달 → 출발 확인으로 감시 시작 (미리 시작은 불가)
+                <View style={styles.safetyActions}>
+                  <View style={styles.safetyActionBtn}>
+                    <Button
+                      label="🏔️ 출발 확인"
+                      onPress={() => useSafetyStore.getState().confirmStart()}
+                    />
+                  </View>
+                  <View style={styles.safetyActionBtn}>
+                    <Button label="예약 취소" variant="secondary" onPress={onCancelScheduled} />
+                  </View>
                 </View>
-                <View style={styles.safetyActionBtn}>
-                  <Button
-                    label="예약 취소"
-                    variant="secondary"
-                    onPress={() => useSafetyStore.getState().cancelScheduled()}
-                  />
-                </View>
-              </View>
+              ) : (
+                <Button label="예약 취소" variant="secondary" onPress={onCancelScheduled} />
+              )}
+              {applicants.length > 0 ? (
+                <Pressable
+                  onPress={() => router.push(`/activity/${activeCheckIn.id}/participants`)}
+                >
+                  <Text style={styles.applicantNote}>
+                    🙋 동행 신청 {applicants.length}명 — 신청자가 모두 나가야 취소할 수 있어요 ·{" "}
+                    <Text style={styles.applicantLink}>참가신청 관리 →</Text>
+                  </Text>
+                </Pressable>
+              ) : null}
             </>
           ) : activeCheckIn ? (
             <>
@@ -312,6 +365,14 @@ const styles = StyleSheet.create({
   ringValue: { ...typography.title, fontSize: 26, color: colors.text, marginTop: 2 },
   safetyActions: { flexDirection: "row", gap: spacing.sm },
   safetyActionBtn: { flex: 1 },
+  applicantNote: {
+    ...typography.caption,
+    color: colors.subtext,
+    lineHeight: 18,
+    textAlign: "center",
+    marginTop: spacing.xs,
+  },
+  applicantLink: { color: colors.accent, fontWeight: "700" },
   safetyTitle: { ...typography.heading, color: colors.text },
   safetyDesc: { ...typography.body, color: colors.subtext, lineHeight: 21 },
   sectionTitle: { ...typography.heading, color: colors.text, marginBottom: spacing.sm + 4 },

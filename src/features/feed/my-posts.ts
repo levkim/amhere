@@ -15,6 +15,7 @@ export type MyPost = {
   createdAt: string;
   expiresAt: string;
   helpfulCount: number;
+  highlighted: boolean;
 };
 
 /** 내가 쓴 포스트 전부 (만료 포함, 최신순) */
@@ -37,13 +38,14 @@ export function useMyPosts() {
             createdAt: p.createdAt,
             expiresAt: p.expiresAt,
             helpfulCount: p.helpfulCount,
+            highlighted: false,
           }));
       }
 
       const { data, error } = await supabase
         .from("posts")
         .select(
-          "id, body, tags, activity, image_url, visibility, created_at, expires_at, post_reactions(count)",
+          "id, body, tags, activity, image_url, visibility, created_at, expires_at, highlighted, post_reactions(count)",
         )
         .eq("author_id", session.user.id)
         .order("created_at", { ascending: false })
@@ -60,6 +62,7 @@ export function useMyPosts() {
         createdAt: r.created_at,
         expiresAt: r.expires_at,
         helpfulCount: Number(r.post_reactions?.[0]?.count ?? 0),
+        highlighted: !!r.highlighted,
       }));
     },
   });

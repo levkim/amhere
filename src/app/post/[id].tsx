@@ -111,10 +111,26 @@ export default function PostDetail() {
               />
             </>
           ) : myParticipation?.status === "accepted" ? (
-            <Button
-              label="💬 단체 채팅 열기"
-              onPress={() => router.push(`/activity/${post.checkInId}/chat`)}
-            />
+            <>
+              <Button
+                label="💬 단체 채팅 열기"
+                onPress={() => router.push(`/activity/${post.checkInId}/chat`)}
+              />
+              <Button
+                label="참가 취소"
+                variant="secondary"
+                onPress={() =>
+                  Alert.alert("참가 취소", "이 활동 참가를 취소할까요?", [
+                    { text: "아니요", style: "cancel" },
+                    {
+                      text: "참가 취소",
+                      style: "destructive",
+                      onPress: () => cancelApply(checkInId),
+                    },
+                  ])
+                }
+              />
+            </>
           ) : myParticipation?.status === "pending" ? (
             <>
               <Text style={styles.joinNote}>승인 대기 중이에요.</Text>

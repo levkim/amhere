@@ -9,7 +9,9 @@ import { useSessionStore } from "@/stores/session";
 import { useMyProfile } from "@/features/profile/hooks";
 import { useMyStats } from "@/features/profile/stats";
 import { useMyBadges } from "@/features/profile/badges";
+import { useMyUserId } from "@/features/matching/hooks";
 import { Avatar, SnsRow } from "@/components/profile-bits";
+import { HighlightsStrip } from "@/components/highlights-strip";
 import { ACTIVITY_LABELS, colors, radius, spacing, typography } from "@/theme/tokens";
 
 function Stat({ value, label, to }: { value: number; label: string; to: Href }) {
@@ -26,6 +28,7 @@ function Stat({ value, label, to }: { value: number; label: string; to: Href }) 
 
 export default function Profile() {
   const signOut = useSessionStore((s) => s.signOut);
+  const myId = useMyUserId();
   const { data: profile } = useMyProfile();
   const { data: stats } = useMyStats();
   const { data: badges } = useMyBadges();
@@ -52,6 +55,7 @@ export default function Profile() {
 
         {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
         <SnsRow sns={profile?.sns ?? {}} />
+        <HighlightsStrip userId={myId} />
         <View style={styles.badges}>
           <Tag label={`Lv.${profile?.level ?? 1}`} tone="accent" />
           {(profile?.activities ?? []).map((a) => (
@@ -69,6 +73,11 @@ export default function Profile() {
             label="📖 내 활동 기록"
             variant="secondary"
             onPress={() => router.push("/profile/history")}
+          />
+          <Button
+            label="🗂️ 보관함"
+            variant="secondary"
+            onPress={() => router.push("/profile/archive")}
           />
         </View>
       </Card>

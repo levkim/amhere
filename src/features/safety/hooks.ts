@@ -198,13 +198,15 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
   cancelScheduled: async () => {
     const active = get().active;
     if (!active) return;
-    cancelNotifs(active.notifIds);
     if (supabase && !active.id.startsWith("local-")) {
-      await supabase
+      // 서버 가드(동행 신청자 있으면 취소 불가)에 걸리면 여기서 에러 → 상태 유지
+      const { error } = await supabase
         .from("check_ins")
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id", active.id);
+      if (error) throw new Error(error.message);
     }
+    cancelNotifs(active.notifIds);
     set({ active: null });
   },
 

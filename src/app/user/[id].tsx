@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useUserProfile } from "@/features/profile/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
 import { Avatar, SnsRow } from "@/components/profile-bits";
+import { HighlightsStrip } from "@/components/highlights-strip";
 import { ACTIVITY_LABELS, colors, spacing, typography } from "@/theme/tokens";
 
 // 버디 요청 전 상대 프로필 상세 보기
@@ -39,6 +40,7 @@ export default function UserProfile() {
         <Text style={styles.name}>{profile.nickname}</Text>
         {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
         <SnsRow sns={profile.sns} />
+        <HighlightsStrip userId={profile.id} />
         <View style={styles.badges}>
           <Tag label={`Lv.${profile.level}`} tone="accent" />
           {profile.activities.map((a) => (
