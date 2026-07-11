@@ -27,7 +27,8 @@ function whenLabel(iso: string): string {
   return `${prefix} ${time}`;
 }
 
-/** 예약(미래 시작) 체크인 포스트만 시작 시간 순으로 상단에 노출 */
+/** 예약(scheduled) 상태 체크인만 시작 시간 순으로 상단에 노출.
+ *  활동이 시작되어 진행중(active)으로 바뀌면 여기서 사라진다. */
 export function UpcomingActivities({ posts }: { posts: Post[] }) {
   const now = Date.now();
   const upcoming = posts
@@ -35,7 +36,8 @@ export function UpcomingActivities({ posts }: { posts: Post[] }) {
       (p) =>
         p.scheduledStartAt !== null &&
         new Date(p.scheduledStartAt).getTime() > now &&
-        p.tags.includes("예정"),
+        // 예약 상태일 때만 노출 — 진행중/완료로 바뀌면 제외
+        p.checkinStatus === "scheduled",
     )
     .sort(
       (a, b) =>
@@ -49,29 +51,38 @@ export function UpcomingActivities({ posts }: { posts: Post[] }) {
       <Text style={styles.title}>⏱ 다가오는 활동</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.row}>
-          {upcoming.map((p) => (
-            <Pressable
-              key={p.id}
-              onPress={() => router.push(`/post/${p.id}`)}
-              style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
-            >
-              <View style={styles.cardTop}>
-                <Text style={styles.emoji}>
-                  {p.activity ? (ACTIVITY_EMOJI[p.activity] ?? "📍") : "📍"}
+          {upcoming.map((p) => {
+            const place = p.checkinLocation ?? p.placeName;
+            return (
+              <Pressable
+                key={p.id}
+                onPress={() => router.push(`/post/${p.id}`)}
+                style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={styles.reservedLabel}>🗓 아웃도어 활동 예약</Text>
+                <View style={styles.cardTop}>
+                  <Text style={styles.emoji}>
+                    {p.activity ? (ACTIVITY_EMOJI[p.activity] ?? "📍") : "📍"}
+                  </Text>
+                  <Text style={styles.when}>{whenLabel(p.scheduledStartAt!)}</Text>
+                </View>
+                {p.checkinTitle ? (
+                  <Text style={styles.checkinTitle} numberOfLines={1}>
+                    {p.checkinTitle}
+                  </Text>
+                ) : null}
+                <Text style={styles.place} numberOfLines={1}>
+                  📍 {place ?? "장소 미정"}
                 </Text>
-                <Text style={styles.when}>{whenLabel(p.scheduledStartAt!)}</Text>
-              </View>
-              <Text style={styles.place} numberOfLines={1}>
-                {p.placeName ?? "장소 미정"}
-              </Text>
-              <Text style={styles.act} numberOfLines={1}>
-                {p.activity ? ACTIVITY_LABELS[p.activity] : ""}
-              </Text>
-              <Text style={styles.joined}>
-                🙋 참가 {p.joinedCount}명{p.tags.includes("동행구함") ? " · 동행구함" : ""}
-              </Text>
-            </Pressable>
-          ))}
+                <Text style={styles.act} numberOfLines={1}>
+                  {p.activity ? ACTIVITY_LABELS[p.activity] : ""}
+                </Text>
+                <Text style={styles.joined}>
+                  🙋 참가 {p.joinedCount}명{p.tags.includes("동행구함") ? " · 동행구함" : ""}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
     </View>
@@ -91,10 +102,17 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: 3,
   },
+  reservedLabel: {
+    ...typography.caption,
+    color: colors.accent,
+    fontWeight: "800",
+    marginBottom: 2,
+  },
   cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   emoji: { fontSize: 22 },
   when: { ...typography.caption, color: colors.accent, fontWeight: "800" },
-  place: { ...typography.body, color: colors.text, fontWeight: "700" },
+  checkinTitle: { ...typography.body, color: colors.text, fontWeight: "700" },
+  place: { ...typography.caption, color: colors.subtext, fontWeight: "600" },
   act: { ...typography.caption, color: colors.subtext },
   joined: { ...typography.caption, color: colors.subtext, marginTop: 2 },
 });

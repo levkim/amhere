@@ -78,6 +78,7 @@ export default function CheckIn() {
   // 즉시 시작은 전체 공개, 예약(미래)은 안전을 위해 친구에게만이 기본값
   const [shareScope, setShareScope] = useState<ShareScope>("public");
   const [crewId, setCrewId] = useState<string | null>(null);
+  const [recordTrack, setRecordTrack] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
@@ -184,6 +185,7 @@ export default function CheckIn() {
         expectedEndAt,
         contactId: effectiveContactId,
         guardianIds,
+        recordTrack,
       });
 
       if (effectiveScope !== "private") {
@@ -202,6 +204,8 @@ export default function CheckIn() {
             visibility: effectiveScope,
             // 실제 체크인 id일 때만 연결 (참가신청 대상)
             checkInId: checkInId && !checkInId.startsWith("local-") ? checkInId : null,
+            // 체크인에서 지정한 장소를 포스트 장소로도 표기
+            placeName: locationName.trim() || null,
             crewId,
           });
         } catch (e) {
@@ -324,6 +328,26 @@ export default function CheckIn() {
             </Text>
           </Pressable>
         </View>
+
+        <Text style={styles.sectionTitle}>경로 기록</Text>
+        <Pressable
+          onPress={() => setRecordTrack((v) => !v)}
+          style={[styles.trackCard, recordTrack && styles.trackCardActive]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.trackTitle, recordTrack && styles.trackTitleActive]}>
+              🛰️ 이동 경로 기록 {recordTrack ? "켜짐" : "꺼짐"}
+            </Text>
+            <Text style={styles.trackDesc}>
+              {recordTrack
+                ? "화면이 꺼져도 GPS로 이동 경로와 거리를 기록해요. 체크아웃하면 지도로 볼 수 있어요."
+                : "켜면 활동 중 이동한 경로를 지도에 남기고 거리·시간을 자동 계산해요."}
+            </Text>
+          </View>
+          <View style={[styles.trackSwitch, recordTrack && styles.trackSwitchOn]}>
+            <View style={[styles.trackKnob, recordTrack && styles.trackKnobOn]} />
+          </View>
+        </Pressable>
 
         {showIosPicker && Platform.OS !== "android" ? (
           <DateTimePicker
@@ -571,6 +595,37 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: spacing.sm,
   },
+  trackCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  trackCardActive: { borderColor: colors.primary, backgroundColor: colors.primary + "12" },
+  trackTitle: { ...typography.body, fontWeight: "700", color: colors.text },
+  trackTitleActive: { color: colors.primary },
+  trackDesc: { ...typography.caption, color: colors.subtext, lineHeight: 18, marginTop: 2 },
+  trackSwitch: {
+    width: 46,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.border,
+    padding: 3,
+    justifyContent: "center",
+  },
+  trackSwitchOn: { backgroundColor: colors.primary },
+  trackKnob: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#fff",
+    alignSelf: "flex-start",
+  },
+  trackKnobOn: { alignSelf: "flex-end" },
   contactList: { gap: spacing.sm },
   noContact: { gap: spacing.sm + 4 },
   noContactText: { ...typography.body, color: colors.subtext, lineHeight: 21 },

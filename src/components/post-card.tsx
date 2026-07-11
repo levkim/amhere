@@ -68,14 +68,18 @@ export function PostTags({ post }: { post: Post }) {
 
 export function PostCard({ post }: { post: Post }) {
   const checkin = isCheckinPost(post);
+  // 연결된 체크인이 완료된 활동이면 '종료'로 표기하고 테두리를 노란색으로 구분한다.
+  const ended = checkin && post.checkinStatus === "completed";
   return (
     <Card
       onPress={() => router.push(`/post/${post.id}`)}
-      style={[styles.card, checkin && styles.checkinCard]}
+      style={[styles.card, checkin && styles.checkinCard, ended && styles.endedCard]}
     >
       {checkin ? (
-        <View style={styles.checkinBadge}>
-          <Text style={styles.checkinBadgeText}>🏔️ 아웃도어 활동</Text>
+        <View style={[styles.checkinBadge, ended && styles.endedBadge]}>
+          <Text style={[styles.checkinBadgeText, ended && styles.endedBadgeText]}>
+            {ended ? "🏁 아웃도어 활동 종료" : "🏔️ 아웃도어 활동"}
+          </Text>
         </View>
       ) : null}
       <View style={styles.header}>
@@ -117,6 +121,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   checkinBadgeText: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  // 종료된 활동: 노란(앰버) 테두리·배지로 구분
+  endedCard: {
+    borderColor: colors.amber,
+    backgroundColor: "rgba(251, 191, 36, 0.06)",
+  },
+  endedBadge: { backgroundColor: "rgba(251, 191, 36, 0.16)" },
+  endedBadgeText: { color: colors.amber },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

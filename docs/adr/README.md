@@ -71,3 +71,4 @@
 | [0017](0017-crew-activities.md) | 크루 활동 연결 | 채택 |
 | [0018](0018-upcoming-activities-feed.md) | 피드 '다가오는 활동' 분리 | 채택 |
 | [0019](0019-archive-highlights.md) | 보관함+하이라이트 / 예약 취소 가드 | 채택 |
+| [0020](0020-activity-tracking-sentry.md) | 백그라운드 경로 트래킹 + Sentry 크래시 리포팅 | 채택 |

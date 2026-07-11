@@ -60,10 +60,12 @@ export default {
           locationWhenInUsePermission:
             "주변의 활동자와 실시간 피드를 보여주기 위해 위치 정보가 필요합니다.",
           locationAlwaysAndWhenInUsePermission:
-            "안전 체크인이 켜져 있는 동안 마지막 위치를 기록해 비상시 알림을 보내기 위해 백그라운드 위치 정보가 필요합니다.",
+            "안전 체크인·경로 기록을 위해 백그라운드에서도 위치 정보가 필요합니다. 화면이 꺼져도 이동 경로를 기록하고 비상시 마지막 위치를 알려드려요.",
           isAndroidBackgroundLocationEnabled: true,
+          isAndroidForegroundServiceEnabled: true,
         },
       ],
+      "@sentry/react-native",
       "expo-secure-store",
       [
         "expo-image-picker",

@@ -28,6 +28,12 @@ export type Post = {
   placeName: string | null;
   /** 연결된 체크인이 예약(미래 시작)이면 그 시작 시각. 아니면 null */
   scheduledStartAt: string | null;
+  /** 연결된 체크인 상태(scheduled/active/completed/…). 체크인 포스트가 아니면 null */
+  checkinStatus: string | null;
+  /** 연결된 체크인 제목. 없으면 null */
+  checkinTitle: string | null;
+  /** 연결된 체크인에서 지정한 장소명. 없으면 null */
+  checkinLocation: string | null;
 };
 
 /** 공개 범위: 전체 공개 / 친구에게만 (비공개는 포스트 자체를 안 만듦) */

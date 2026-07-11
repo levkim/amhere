@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -35,30 +36,45 @@ function durationLabel(record: CheckInRecord): string | null {
   return m > 0 ? `${h}시간 ${m}분 활동` : `${h}시간 활동`;
 }
 
+function formatDistance(m: number): string {
+  return m >= 1000 ? `${(m / 1000).toFixed(2)}km` : `${Math.round(m)}m`;
+}
+
 function RecordCard({ record }: { record: CheckInRecord }) {
   const status = STATUS_LABELS[record.status];
   const duration = durationLabel(record);
+  const hasTrack = record.track.length >= 2;
   return (
-    <Card style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.title}>
-          {record.locationName ? `📍 ${record.locationName}` : "📍 장소 미지정"}
-        </Text>
-        <Tag label={status.label} tone={status.tone} />
-      </View>
-      {record.title ? <Text style={styles.recordTitle}>{record.title}</Text> : null}
-      <Text style={styles.meta}>
-        {ACTIVITY_LABELS[record.activity]} · {formatDate(record.scheduledStartAt)} 시작
-        {duration ? ` · ${duration}` : ""}
-      </Text>
-      {record.tags.length > 0 ? (
-        <View style={styles.tags}>
-          {record.tags.map((t) => (
-            <Tag key={t} label={`#${t}`} />
-          ))}
+    <Pressable
+      onPress={() => router.push(`/activity/${record.id}/record`)}
+      style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+    >
+      <Card style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            {record.locationName ? `📍 ${record.locationName}` : "📍 장소 미지정"}
+          </Text>
+          <Tag label={status.label} tone={status.tone} />
         </View>
-      ) : null}
-    </Card>
+        {record.title ? <Text style={styles.recordTitle}>{record.title}</Text> : null}
+        <Text style={styles.meta}>
+          {ACTIVITY_LABELS[record.activity]} · {formatDate(record.scheduledStartAt)} 시작
+          {duration ? ` · ${duration}` : ""}
+        </Text>
+        {hasTrack ? (
+          <Text style={styles.trackMeta}>
+            🛰️ 경로 기록 · {formatDistance(record.trackDistanceM)} 이동
+          </Text>
+        ) : null}
+        {record.tags.length > 0 ? (
+          <View style={styles.tags}>
+            {record.tags.map((t) => (
+              <Tag key={t} label={`#${t}`} />
+            ))}
+          </View>
+        ) : null}
+      </Card>
+    </Pressable>
   );
 }
 
@@ -150,5 +166,6 @@ const styles = StyleSheet.create({
   title: { ...typography.heading, color: colors.text, flex: 1 },
   recordTitle: { ...typography.body, color: colors.text },
   meta: { ...typography.caption, color: colors.subtext },
+  trackMeta: { ...typography.caption, color: colors.accent, fontWeight: "700" },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs + 2 },
 });

@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import { supabase } from "@/lib/supabase";
+import { queryClient } from "@/lib/query-client";
+import { startTracking, stopTracking, trackDistance, clearTrack } from "@/features/tracking/engine";
 import type { Activity } from "@/theme/tokens";
 
 // 아웃도어 체크인 상태 머신:
@@ -20,6 +22,7 @@ type ActiveCheckIn = {
   expectedEndAt: string;
   state: CheckInState;
   notifIds: string[]; // 취소할 로컬 알림들 (시작 프롬프트 + 종료 리마인더)
+  recordTrack: boolean; // 경로 기록 여부
 };
 
 type StartInput = {
@@ -31,6 +34,7 @@ type StartInput = {
   expectedEndAt: Date;
   contactId: string | null;
   guardianIds: string[]; // 임시 지킴이(버디) user_id들
+  recordTrack: boolean;
 };
 
 type SafetyState = {
@@ -115,6 +119,7 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         expectedEndAt: data.expected_end_at,
         state: data.status === "scheduled" ? "scheduled" : "active",
         notifIds: [], // 복원 시 로컬 알림 id는 알 수 없음 (이미 예약돼 있음)
+        recordTrack: false, // 복원 시엔 기록 상태 알 수 없음 (재시작 후 추적은 새 활동부터)
       },
     });
   },
@@ -128,6 +133,7 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
     expectedEndAt,
     contactId,
     guardianIds,
+    recordTrack,
   }) => {
     const isImmediate = scheduledStartAt.getTime() <= Date.now() + 60_000; // 1분 이내면 바로시작
     const state: CheckInState = isImmediate ? "active" : "scheduled";
@@ -166,6 +172,13 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
 
     const notifIds = await scheduleReminders(state, scheduledStartAt, expectedEndAt, locationName);
 
+    // 바로 시작하는 활동이고 경로 기록을 켰으면 트래킹 시작
+    if (state === "active" && recordTrack) {
+      startTracking().catch((e) => console.warn("startTracking failed:", e));
+    } else {
+      clearTrack().catch(() => {});
+    }
+
     set({
       active: {
         id,
@@ -177,6 +190,7 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         expectedEndAt: expectedEndAt.toISOString(),
         state,
         notifIds,
+        recordTrack,
       },
     });
   },
@@ -192,6 +206,12 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         .eq("id", active.id);
       if (error) throw new Error(error.message);
     }
+    // 예약이 실제 시작될 때 경로 기록 개시
+    if (active.recordTrack) {
+      startTracking().catch((e) => console.warn("startTracking failed:", e));
+    }
+    // 진행중으로 바뀌었으니 피드('다가오는 활동' 카드)를 갱신 — 예약 카드가 사라진다
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
     set({ active: { ...active, state: "active" } });
   },
 
@@ -239,15 +259,30 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
     const active = get().active;
     if (!active) return;
 
+    // 경로 기록 중이었다면 멈추고 경로·거리 저장
+    let track: { lat: number; lng: number; t: number }[] = [];
+    let distance = 0;
+    if (active.recordTrack) {
+      track = await stopTracking().catch(() => []);
+      distance = trackDistance(track);
+    }
+
     if (supabase && !active.id.startsWith("local-")) {
       const { error } = await supabase
         .from("check_ins")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+          ...(active.recordTrack ? { track, track_distance_m: distance } : {}),
+        })
         .eq("id", active.id);
       if (error) throw new Error(error.message);
     }
 
+    clearTrack().catch(() => {});
     cancelNotifs(active.notifIds);
+    // 완료로 바뀌었으니 피드 갱신 — 카드가 '종료'로 표기된다
+    queryClient.invalidateQueries({ queryKey: ["feed"] });
     set({ active: null });
   },
 }));

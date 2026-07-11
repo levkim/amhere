@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { supabase } from "@/lib/supabase";
@@ -23,10 +23,14 @@ export function useParticipants(checkInId: string) {
     enabled: !!checkInId,
   });
 
+  // 채널 토픽을 인스턴스마다 고유하게 — 같은 checkInId를 여러 컴포넌트가 동시에
+  // 구독할 때 토픽이 충돌해 "add callbacks after subscribe()" 오류가 나는 것을 막는다.
+  const topicId = useRef(`participants:${checkInId}:${Math.random().toString(36).slice(2)}`);
+
   useEffect(() => {
     if (!supabase || !checkInId) return;
     const channel = supabase
-      .channel(`participants:${checkInId}`)
+      .channel(topicId.current)
       .on(
         "postgres_changes",
         {
@@ -81,10 +85,12 @@ export function useActivityMessages(checkInId: string) {
     enabled: !!checkInId,
   });
 
+  const topicId = useRef(`activity-messages:${checkInId}:${Math.random().toString(36).slice(2)}`);
+
   useEffect(() => {
     if (!supabase || !checkInId) return;
     const channel = supabase
-      .channel(`activity-messages:${checkInId}`)
+      .channel(topicId.current)
       .on(
         "postgres_changes",
         {
