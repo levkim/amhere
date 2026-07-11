@@ -10,7 +10,9 @@ import {
   useCrew,
   useCrewMembers,
   useCrewPosts,
+  useDisbandCrew,
   useJoinCrew,
+  useKickCrewMember,
   useLeaveCrew,
   useRespondCrewMember,
 } from "@/features/crew/hooks";
@@ -71,6 +73,14 @@ function MemberRow({
   crewId: string;
 }) {
   const { mutate: respond, isPending } = useRespondCrewMember(crewId);
+  const { mutate: kick, isPending: kicking } = useKickCrewMember(crewId);
+
+  const confirmKick = () =>
+    Alert.alert("멤버 내보내기", `${member.nickname}님을 크루에서 내보낼까요?`, [
+      { text: "취소", style: "cancel" },
+      { text: "내보내기", style: "destructive", onPress: () => kick(member.userId) },
+    ]);
+
   return (
     <View style={styles.memberRow}>
       <Avatar url={member.avatarUrl} size={40} />
@@ -100,6 +110,11 @@ function MemberRow({
           </View>
         </View>
       ) : null}
+      {isOwnerView && member.role !== "owner" && member.status === "accepted" ? (
+        <Text style={styles.kick} onPress={kicking ? undefined : confirmKick}>
+          내보내기
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -112,6 +127,7 @@ export default function CrewHome() {
   const { data: members } = useCrewMembers(crewId);
   const { mutateAsync: join, isPending: joining } = useJoinCrew();
   const { mutateAsync: leave } = useLeaveCrew();
+  const { mutateAsync: disband, isPending: disbanding } = useDisbandCrew();
 
   if (!crew) {
     return (
@@ -138,6 +154,40 @@ export default function CrewHome() {
       { text: "취소", style: "cancel" },
       { text: "탈퇴", style: "destructive", onPress: () => leave(crew.id) },
     ]);
+
+  // 크루장 외 수락된 멤버 수 — 0명일 때만 폭파 가능 (서버 트리거도 같은 조건 강제)
+  const otherMembers = (members ?? []).filter(
+    (m) => m.userId !== myId && m.status === "accepted",
+  ).length;
+
+  const confirmDisband = () => {
+    if (otherMembers > 0) {
+      Alert.alert(
+        "아직 폭파할 수 없어요",
+        `멤버 ${otherMembers}명이 남아있어요.\n모든 멤버가 나가거나 내보낸 후에 폭파할 수 있어요.`,
+      );
+      return;
+    }
+    Alert.alert(
+      "💥 크루 폭파",
+      `${crew.name} 크루를 폭파할까요?\n크루 채팅 기록이 모두 삭제되며 되돌릴 수 없어요.`,
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "폭파",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await disband(crew.id);
+              router.back();
+            } catch (e) {
+              Alert.alert("폭파 실패", e instanceof Error ? e.message : "다시 시도해 주세요.");
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <Screen padded={false}>
@@ -193,7 +243,22 @@ export default function CrewHome() {
           </>
         }
         ListFooterComponent={
-          isMember && !isOwner ? (
+          isOwner ? (
+            <View style={styles.disbandWrap}>
+              <Text style={styles.disband} onPress={disbanding ? undefined : confirmDisband}>
+                💥 크루 폭파
+              </Text>
+              {otherMembers > 0 ? (
+                <Text style={styles.disbandHint}>
+                  멤버 {otherMembers}명이 모두 나간 후에 폭파할 수 있어요.
+                </Text>
+              ) : (
+                <Text style={styles.disbandHint}>
+                  폭파하면 크루와 채팅 기록이 삭제되며 되돌릴 수 없어요.
+                </Text>
+              )}
+            </View>
+          ) : isMember ? (
             <Text style={styles.leave} onPress={confirmLeave}>
               크루 탈퇴
             </Text>
@@ -261,5 +326,26 @@ const styles = StyleSheet.create({
     textAlign: "center",
     padding: spacing.md,
     marginTop: spacing.md,
+  },
+  kick: {
+    ...typography.caption,
+    color: colors.danger,
+    fontWeight: "700",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  disbandWrap: { marginTop: spacing.lg, alignItems: "center", gap: spacing.xs },
+  disband: {
+    ...typography.body,
+    color: colors.danger,
+    fontWeight: "700",
+    padding: spacing.sm,
+  },
+  disbandHint: {
+    ...typography.caption,
+    color: colors.muted,
+    textAlign: "center",
+    paddingHorizontal: spacing.lg,
+    lineHeight: 17,
   },
 });

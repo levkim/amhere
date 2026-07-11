@@ -4,12 +4,14 @@ import { queryClient } from "@/lib/query-client";
 import { supabase } from "@/lib/supabase";
 import {
   createCrew,
+  disbandCrew,
   fetchCrewMembers,
   fetchCrewMessages,
   fetchCrewPosts,
   fetchCrews,
   fetchMyJoinedCrews,
   joinCrew,
+  kickCrewMember,
   leaveCrew,
   respondCrewMember,
   sendCrewMessage,
@@ -91,6 +93,28 @@ export function useLeaveCrew() {
     onSuccess: (_d, crewId) => {
       queryClient.invalidateQueries({ queryKey: ["crews"] });
       queryClient.invalidateQueries({ queryKey: ["crew-members", crewId] });
+    },
+  });
+}
+
+/** 크루장이 멤버 내보내기 */
+export function useKickCrewMember(crewId: string) {
+  return useMutation({
+    mutationFn: (userId: string) => kickCrewMember(crewId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crew-members", crewId] });
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+    },
+  });
+}
+
+/** 크루 폭파 (멤버 전원 퇴장 후에만 — 서버 트리거가 강제) */
+export function useDisbandCrew() {
+  return useMutation({
+    mutationFn: (crewId: string) => disbandCrew(crewId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["crews"] });
+      queryClient.invalidateQueries({ queryKey: ["my-joined-crews"] });
     },
   });
 }

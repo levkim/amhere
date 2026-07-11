@@ -150,6 +150,24 @@ export async function leaveCrew(crewId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+/** 크루장이 멤버 내보내기 (RLS: 크루장만, owner 행은 불가) */
+export async function kickCrewMember(crewId: string, userId: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("crew_members")
+    .delete()
+    .eq("crew_id", crewId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+}
+
+/** 크루 폭파 — 서버 트리거가 '크루장 외 멤버 없음'을 강제 (00025) */
+export async function disbandCrew(crewId: string): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from("crews").delete().eq("id", crewId);
+  if (error) throw new Error(error.message);
+}
+
 export async function respondCrewMember(
   crewId: string,
   userId: string,
