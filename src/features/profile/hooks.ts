@@ -99,7 +99,12 @@ export function useUpdateProfile() {
     mutationFn: async (
       patch: Partial<
         Pick<Profile, "nickname" | "bio" | "activities" | "privacy" | "sns" | "onboarded">
-      >,
+      > & {
+        /** 약관 동의 일시 (가입 시 1회 기록, DB 컬럼명 그대로) */
+        terms_agreed_at?: string;
+        /** 마케팅 수신 동의 */
+        marketing_opt_in?: boolean;
+      },
     ) => {
       if (!supabase) return; // 데모 모드: 저장 생략
       const user = (await supabase.auth.getUser()).data.user;

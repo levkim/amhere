@@ -87,6 +87,16 @@ function RootNav() {
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack.Protected>
+        {/* 약관 문서 — 로그인 전(가입 동의 화면)에서도 열 수 있어야 하므로 가드 밖 */}
+        <Stack.Screen name="legal/terms" options={{ title: "이용약관", presentation: "modal" }} />
+        <Stack.Screen
+          name="legal/privacy"
+          options={{ title: "개인정보 처리방침", presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="legal/location-terms"
+          options={{ title: "위치기반서비스 이용약관", presentation: "modal" }}
+        />
       </Stack>
     </>
   );

@@ -13,7 +13,7 @@ export default {
     name: "Amhere",
     slug: "amhere",
     owner: "levkim",
-    version: "0.1.0",
+    version: "0.2.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "amhere",
@@ -66,6 +66,8 @@ export default {
         },
       ],
       "@sentry/react-native",
+      // Google 로그인 네이티브 SDK (Android는 웹 클라이언트 ID를 런타임에 주입)
+      "@react-native-google-signin/google-signin",
       "expo-secure-store",
       [
         "expo-image-picker",

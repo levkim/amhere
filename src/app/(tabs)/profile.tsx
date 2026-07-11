@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, type Href } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
-import { isDemoMode } from "@/lib/supabase";
+import { isDemoMode, supabase } from "@/lib/supabase";
 import { useSessionStore } from "@/stores/session";
 import { useMyProfile } from "@/features/profile/hooks";
 import { useMyStats } from "@/features/profile/stats";
@@ -114,9 +114,40 @@ export default function Profile() {
 
       <View style={styles.footer}>
         <Button label="로그아웃" variant="secondary" onPress={signOut} />
+        <Text style={styles.deleteAccount} onPress={confirmDeleteAccount}>
+          회원 탈퇴
+        </Text>
       </View>
     </Screen>
   );
+
+  // 회원 탈퇴: 결과 안내 → 최종 확인 → 서버 RPC(계정+데이터 전부 삭제) → 로그아웃
+  function confirmDeleteAccount() {
+    if (isDemoMode) {
+      Alert.alert("데모 모드", "데모 모드에서는 탈퇴할 계정이 없어요.");
+      return;
+    }
+    Alert.alert(
+      "회원 탈퇴",
+      "탈퇴하면 프로필·포스트·활동 기록·버디·채팅이 모두 삭제되며 복구할 수 없어요.\n\n내가 크루장인 크루가 있다면 먼저 폭파해야 해요.",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "탈퇴하기",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const { error } = await supabase!.rpc("delete_my_account");
+              if (error) throw new Error(error.message);
+              await signOut(); // 세션 정리 → 로그인 화면으로
+            } catch (e) {
+              Alert.alert("탈퇴 실패", e instanceof Error ? e.message : "다시 시도해 주세요.");
+            }
+          },
+        },
+      ],
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -132,6 +163,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   stat: { flex: 1, alignItems: "center" },
+  deleteAccount: {
+    ...typography.caption,
+    color: colors.muted,
+    textAlign: "center",
+    textDecorationLine: "underline",
+    padding: spacing.sm,
+  },
   statValue: { ...typography.heading, fontSize: 20, color: colors.text },
   statLabel: { ...typography.caption, color: colors.subtext, marginTop: 1 },
   statDivider: { width: 1, height: 24, backgroundColor: colors.border },
