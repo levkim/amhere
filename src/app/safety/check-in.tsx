@@ -78,8 +78,8 @@ export default function CheckIn() {
   // 즉시 시작은 전체 공개, 예약(미래)은 안전을 위해 친구에게만이 기본값
   const [shareScope, setShareScope] = useState<ShareScope>("public");
   const [crewId, setCrewId] = useState<string | null>(null);
-  // 경로 기록은 항상 켜짐 — 모든 아웃도어 활동의 이동 경로를 기본 기록한다
-  const recordTrack = true;
+  // 경로 기록: 기본 켜짐, 원하면 끌 수 있음 (배터리 절약 등)
+  const [recordTrack, setRecordTrack] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const start = useSafetyStore((s) => s.start);
@@ -331,14 +331,24 @@ export default function CheckIn() {
         </View>
 
         <Text style={styles.sectionTitle}>경로 기록</Text>
-        <View style={[styles.trackCard, styles.trackCardActive]}>
+        <Pressable
+          onPress={() => setRecordTrack((v) => !v)}
+          style={[styles.trackCard, recordTrack && styles.trackCardActive]}
+        >
           <View style={{ flex: 1 }}>
-            <Text style={[styles.trackTitle, styles.trackTitleActive]}>🛰️ 이동 경로 기록 켜짐</Text>
+            <Text style={[styles.trackTitle, recordTrack && styles.trackTitleActive]}>
+              🛰️ 이동 경로 기록 {recordTrack ? "켜짐" : "꺼짐"}
+            </Text>
             <Text style={styles.trackDesc}>
-              화면이 꺼져도 GPS로 이동 경로와 거리를 기록해요. 체크아웃하면 지도로 볼 수 있어요.
+              {recordTrack
+                ? "화면이 꺼져도 GPS로 이동 경로와 거리를 기록해요. 체크아웃하면 지도로 볼 수 있어요."
+                : "꺼두면 이 활동의 이동 경로가 남지 않아요. 배터리를 아끼고 싶을 때 꺼보세요."}
             </Text>
           </View>
-        </View>
+          <View style={[styles.trackSwitch, recordTrack && styles.trackSwitchOn]}>
+            <View style={[styles.trackKnob, recordTrack && styles.trackKnobOn]} />
+          </View>
+        </Pressable>
 
         {showIosPicker && Platform.OS !== "android" ? (
           <DateTimePicker
