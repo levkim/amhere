@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, type Href } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { Card } from "@/components/ui/card";
@@ -34,7 +34,9 @@ export default function Profile() {
   const { data: badges } = useMyBadges();
 
   return (
-    <Screen edges={["top"]}>
+    <Screen padded={false} edges={["top"]}>
+      {/* 콘텐츠(하이라이트·배지)가 화면보다 길어질 수 있어 반드시 스크롤 */}
+      <ScrollView contentContainerStyle={styles.scroll}>
       <Card style={styles.card}>
         {/* 아바타 + [닉네임 / 친구·체크인·포스트] 가로 헤더 */}
         <View style={styles.header}>
@@ -118,6 +120,7 @@ export default function Profile() {
           회원 탈퇴
         </Text>
       </View>
+      </ScrollView>
     </Screen>
   );
 
@@ -151,6 +154,7 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
+  scroll: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl },
   card: { marginTop: spacing.md, gap: spacing.sm },
   header: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   headerRight: { flex: 1, gap: spacing.sm },
