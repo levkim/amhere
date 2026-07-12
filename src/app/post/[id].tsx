@@ -59,12 +59,19 @@ export default function PostDetail() {
     );
   }
 
+  // 연결된 체크인이 완료된 활동이면 '종료' 표기 + 노란 테두리 + 참가신청 차단
+  const ended = isCheckinPost(post) && post.checkinStatus === "completed";
+
   return (
     <Screen>
-      <Card style={[styles.card, isCheckinPost(post) && styles.checkinCard]}>
+      <Card
+        style={[styles.card, isCheckinPost(post) && styles.checkinCard, ended && styles.endedCard]}
+      >
         {isCheckinPost(post) ? (
-          <View style={styles.checkinBadge}>
-            <Text style={styles.checkinBadgeText}>🏔️ 아웃도어 활동</Text>
+          <View style={[styles.checkinBadge, ended && styles.endedBadge]}>
+            <Text style={[styles.checkinBadgeText, ended && styles.endedBadgeText]}>
+              {ended ? "🏁 아웃도어 활동 종료" : "🏔️ 아웃도어 활동"}
+            </Text>
           </View>
         ) : null}
         <Text style={styles.nickname}>{post.nickname}</Text>
@@ -93,12 +100,23 @@ export default function PostDetail() {
         </View>
       ) : null}
 
-      {/* 동행구함 + 체크인 연결 → 참가신청 / 관리 / 단체 채팅 */}
+      {/* 동행구함 + 체크인 연결 → 참가신청 / 관리 / 단체 채팅 (종료된 활동은 신청 불가) */}
       {post.checkInId && post.tags.includes("동행구함") ? (
         <View style={styles.joinBox}>
           <Text style={styles.joinCount}>🙋 참가 확정 {post.joinedCount}명</Text>
 
-          {post.authorId === myId ? (
+          {ended ? (
+            <>
+              <Text style={styles.joinNote}>종료된 활동이라 참가신청을 받지 않아요.</Text>
+              {post.authorId === myId || myParticipation?.status === "accepted" ? (
+                <Button
+                  label="💬 단체 채팅 열기"
+                  variant="secondary"
+                  onPress={() => router.push(`/activity/${post.checkInId}/chat`)}
+                />
+              ) : null}
+            </>
+          ) : post.authorId === myId ? (
             <>
               <Button
                 label="참가신청 관리"
@@ -210,6 +228,13 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   checkinBadgeText: { ...typography.caption, color: colors.accent, fontWeight: "600" },
+  // 종료된 활동: 노란(앰버) 테두리·배지 (피드 카드와 동일)
+  endedCard: {
+    borderColor: colors.amber,
+    backgroundColor: "rgba(251, 191, 36, 0.06)",
+  },
+  endedBadge: { backgroundColor: "rgba(251, 191, 36, 0.16)" },
+  endedBadgeText: { color: colors.amber },
   buddyBtn: { marginTop: spacing.lg },
   joinBox: { marginTop: spacing.lg, gap: spacing.sm },
   joinCount: { ...typography.body, color: colors.accent, fontWeight: "600" },
