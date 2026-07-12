@@ -28,7 +28,7 @@ export default function Welcome() {
     <Screen>
       <View style={styles.hero}>
         <Text style={styles.logo}>🏔️</Text>
-        <Text style={styles.title}>여기있어</Text>
+        <Text style={styles.title}>여기이써</Text>
         <Text style={styles.subtitle}>
           지금, 여기, 나와 같은 아웃도어 사람들.{"\n"}혼자여도 혼자가 아니게.
         </Text>

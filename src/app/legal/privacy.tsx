@@ -4,7 +4,7 @@ import { LegalDoc } from "@/components/legal-doc";
 export default function Privacy() {
   return (
     <LegalDoc
-      title="여기있어 개인정보 처리방침"
+      title="여기이써 개인정보 처리방침"
       updated="2026-07-12"
       sections={[
         [

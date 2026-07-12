@@ -100,7 +100,7 @@ export default function Onboarding() {
         {step === 0 ? (
           <>
             <Text style={styles.emoji}>🏔️</Text>
-            <Text style={styles.title}>여기있어에 오신 걸 환영해요</Text>
+            <Text style={styles.title}>여기이써에 오신 걸 환영해요</Text>
             <Text style={styles.subtitle}>서비스 이용을 위해 약관에 동의해 주세요</Text>
 
             <Pressable onPress={toggleAll} style={[styles.agreeAll, allAgreed && styles.agreeAllOn]}>

@@ -52,7 +52,7 @@ export async function startTracking(): Promise<boolean> {
     foregroundService:
       Platform.OS === "android"
         ? {
-            notificationTitle: "여기있어 · 경로 기록 중",
+            notificationTitle: "여기이써 · 경로 기록 중",
             notificationBody: "활동 경로를 기록하고 있어요. 체크아웃하면 멈춰요.",
             notificationColor: "#2DD4A7",
           }

@@ -4,12 +4,12 @@ import { LegalDoc } from "@/components/legal-doc";
 export default function LocationTerms() {
   return (
     <LegalDoc
-      title="여기있어 위치기반서비스 이용약관"
+      title="여기이써 위치기반서비스 이용약관"
       updated="2026-07-12"
       sections={[
         [
           "제1조 (목적)",
-          "이 약관은 여기있어가 제공하는 위치기반서비스의 이용 조건을 정합니다.",
+          "이 약관은 여기이써가 제공하는 위치기반서비스의 이용 조건을 정합니다.",
         ],
         [
           "제2조 (서비스 내용)",
