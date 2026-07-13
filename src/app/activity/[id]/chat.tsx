@@ -9,21 +9,45 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { useActivityMessages, useSendActivityMessage } from "@/features/activity/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
 import type { ActivityMessage } from "@/features/activity/api";
+import { LIVEMAP_MSG } from "@/features/activity/live";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
-function Bubble({ message, mine }: { message: ActivityMessage; mine: boolean }) {
+function Bubble({
+  message,
+  mine,
+  checkInId,
+}: {
+  message: ActivityMessage;
+  mine: boolean;
+  checkInId: string;
+}) {
+  // 라이브 맵 공유 메시지 → 탭하면 라이브 맵이 열리는 카드
+  const isLivemap = message.body === LIVEMAP_MSG;
   return (
     <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
       <View style={[styles.bubbleWrap, mine && styles.bubbleWrapMine]}>
         {!mine ? <Text style={styles.sender}>{message.senderNickname}</Text> : null}
-        <View style={[styles.bubble, mine && styles.bubbleMine]}>
-          <Text style={styles.bubbleText}>{message.body}</Text>
-        </View>
+        {isLivemap ? (
+          <Pressable
+            onPress={() => router.push(`/activity/${checkInId}/live`)}
+            style={styles.livemapCard}
+          >
+            <Text style={styles.livemapEmoji}>📡</Text>
+            <View>
+              <Text style={styles.livemapTitle}>라이브 맵</Text>
+              <Text style={styles.livemapDesc}>동행들의 실시간 위치 보기 →</Text>
+            </View>
+          </Pressable>
+        ) : (
+          <View style={[styles.bubble, mine && styles.bubbleMine]}>
+            <Text style={styles.bubbleText}>{message.body}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -54,7 +78,9 @@ export default function ActivityChat() {
         <FlatList
           data={messages}
           keyExtractor={(m) => m.id}
-          renderItem={({ item }) => <Bubble message={item} mine={item.senderId === myId} />}
+          renderItem={({ item }) => (
+            <Bubble message={item} mine={item.senderId === myId} checkInId={checkInId} />
+          )}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
             <Text style={styles.notice}>이 활동에 참가한 사람들의 단체 채팅이에요.</Text>
@@ -99,6 +125,21 @@ const styles = StyleSheet.create({
   },
   bubbleMine: { backgroundColor: colors.primary },
   bubbleText: { ...typography.body, color: colors.text, lineHeight: 21 },
+  // 라이브 맵 공유 카드
+  livemapCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+  },
+  livemapEmoji: { fontSize: 24 },
+  livemapTitle: { ...typography.body, fontWeight: "800", color: colors.accent },
+  livemapDesc: { ...typography.caption, color: colors.subtext },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",

@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import { supabase } from "@/lib/supabase";
 import { queryClient } from "@/lib/query-client";
 import { startTracking, stopTracking, trackDistance, clearTrack } from "@/features/tracking/engine";
+import { setLiveSession, stopLiveShare } from "@/features/tracking/live";
 import type { Activity } from "@/theme/tokens";
 
 // 아웃도어 체크인 상태 머신:
@@ -175,6 +176,8 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
     // 바로 시작하는 활동이고 경로 기록을 켰으면 트래킹 시작
     if (state === "active" && recordTrack) {
       startTracking().catch((e) => console.warn("startTracking failed:", e));
+      // 라이브 위치 공유 세션 — TRACK_TASK 콜백이 동행에게 위치를 업서트한다
+      if (!id.startsWith("local-")) setLiveSession(id).catch(() => {});
     } else {
       clearTrack().catch(() => {});
     }
@@ -206,9 +209,10 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         .eq("id", active.id);
       if (error) throw new Error(error.message);
     }
-    // 예약이 실제 시작될 때 경로 기록 개시
+    // 예약이 실제 시작될 때 경로 기록 개시 + 라이브 위치 공유 세션
     if (active.recordTrack) {
       startTracking().catch((e) => console.warn("startTracking failed:", e));
+      if (!active.id.startsWith("local-")) setLiveSession(active.id).catch(() => {});
     }
     // 진행중으로 바뀌었으니 피드('다가오는 활동' 카드)를 갱신 — 예약 카드가 사라진다
     queryClient.invalidateQueries({ queryKey: ["feed"] });
@@ -283,8 +287,12 @@ export const useSafetyStore = create<SafetyState>((set, get) => ({
         })
         .eq("id", active.id);
       if (error) throw new Error(error.message);
+
+      // 활동 종료 → 라이브 위치 전체 정리 (호스트 권한, RLS 허용)
+      await supabase.from("live_locations").delete().eq("check_in_id", active.id);
     }
 
+    stopLiveShare(active.id).catch(() => {});
     clearTrack().catch(() => {});
     cancelNotifs(active.notifIds);
     // 완료로 바뀌었으니 피드 갱신 — 카드가 '종료'로 표기된다

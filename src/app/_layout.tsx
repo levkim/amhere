@@ -14,6 +14,7 @@ import { initSentry, wrapWithSentry } from "@/lib/sentry";
 // 백그라운드 위치 태스크(TaskManager.defineTask)를 앱 시작 시 등록한다.
 // OS가 백그라운드 이벤트를 전달하려면 이 모듈이 최상위에서 import되어 있어야 한다.
 import "@/features/tracking/engine";
+import "@/features/tracking/live";
 
 initSentry();
 
@@ -55,6 +56,7 @@ function RootNav() {
           <Stack.Screen name="buddy/new" options={{ title: "버디 요청", presentation: "modal" }} />
           <Stack.Screen name="chat/[requestId]" options={{ title: "채팅" }} />
           <Stack.Screen name="activity/[id]/record" options={{ title: "활동 기록" }} />
+          <Stack.Screen name="activity/[id]/live" options={{ title: "라이브 맵" }} />
           <Stack.Screen name="activity/[id]/participants" options={{ title: "참가신청 관리" }} />
           <Stack.Screen name="activity/[id]/chat" options={{ title: "단체 채팅" }} />
           <Stack.Screen name="crew/new" options={{ title: "크루 만들기", presentation: "modal" }} />

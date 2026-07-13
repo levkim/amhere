@@ -105,6 +105,15 @@ export default function PostDetail() {
         <View style={styles.joinBox}>
           <Text style={styles.joinCount}>🙋 참가 확정 {post.joinedCount}명</Text>
 
+          {/* 진행 중인 활동: 멤버(호스트·수락된 동행)에게 라이브 맵 입장 */}
+          {post.checkinStatus === "active" &&
+          (post.authorId === myId || myParticipation?.status === "accepted") ? (
+            <Button
+              label="📡 라이브 맵 — 동행 위치 보기"
+              onPress={() => router.push(`/activity/${post.checkInId}/live`)}
+            />
+          ) : null}
+
           {ended ? (
             <>
               <Text style={styles.joinNote}>종료된 활동이라 참가신청을 받지 않아요.</Text>

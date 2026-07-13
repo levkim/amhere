@@ -28,9 +28,15 @@ TaskManager.defineTask(TRACK_TASK, async ({ data, error }: any) => {
   if (error || !data) return;
   const locs: Location.LocationObject[] = data.locations ?? [];
   if (locs.length === 0) return;
-  await appendPoints(
-    locs.map((l) => ({ lat: l.coords.latitude, lng: l.coords.longitude, t: l.timestamp })),
-  );
+  const points = locs.map((l) => ({
+    lat: l.coords.latitude,
+    lng: l.coords.longitude,
+    t: l.timestamp,
+  }));
+  await appendPoints(points);
+  // 라이브 세션이 있으면(호스트가 위치 공유 중) 서버에도 업서트 — 별도 태스크 없이 편승
+  const { pushLive } = await import("./live");
+  await pushLive(points).catch(() => {});
 });
 
 /** 경로 기록 시작 (백그라운드) */
