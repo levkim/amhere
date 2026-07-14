@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HelpfulButton, isCheckinPost, PostTags } from "@/components/post-card";
-import { useDeletePost, useNearbyPosts } from "@/features/feed/hooks";
+import { useDeletePost, useNearbyPosts, usePostDetailFallback } from "@/features/feed/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
 import {
   useApplyToActivity,
@@ -19,7 +19,13 @@ export default function PostDetail() {
   const { data: posts } = useNearbyPosts();
   const myId = useMyUserId();
   const { mutateAsync: removePost, isPending: deleting } = useDeletePost();
-  const post = posts?.find((p) => p.id === id);
+  const nearbyPost = posts?.find((p) => p.id === id);
+  // 피드에 없으면(멀리 있는 활동을 채팅 초대로 열었을 때) 단건 폴백 조회
+  const { data: fallbackPost, isLoading: fallbackLoading } = usePostDetailFallback(
+    id ?? "",
+    !nearbyPost,
+  );
+  const post = nearbyPost ?? fallbackPost ?? undefined;
 
   // 참가신청 (동행구함 + 체크인 연결된 포스트만)
   const checkInId = post?.checkInId ?? "";
@@ -48,6 +54,8 @@ export default function PostDetail() {
   };
 
   if (!post) {
+    // 폴백 조회가 아직 로딩 중이면 빈 화면 유지 (없다고 단정하지 않음)
+    if (fallbackLoading) return <Screen />;
     return (
       <Screen>
         <EmptyState

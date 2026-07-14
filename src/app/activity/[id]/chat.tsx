@@ -15,6 +15,9 @@ import { useActivityMessages, useSendActivityMessage } from "@/features/activity
 import { useMyUserId } from "@/features/matching/hooks";
 import type { ActivityMessage } from "@/features/activity/api";
 import { LIVEMAP_MSG } from "@/features/activity/live";
+import { parseActivityInvite } from "@/features/activity/invite";
+import { ActivityShareButton } from "@/components/activity-share-button";
+import { ActivityInviteCard } from "@/components/activity-invite-card";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 function Bubble({
@@ -28,6 +31,7 @@ function Bubble({
 }) {
   // 라이브 맵 공유 메시지 → 탭하면 라이브 맵이 열리는 카드
   const isLivemap = message.body === LIVEMAP_MSG;
+  const invitePostId = parseActivityInvite(message.body);
   return (
     <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
       <View style={[styles.bubbleWrap, mine && styles.bubbleWrapMine]}>
@@ -43,6 +47,8 @@ function Bubble({
               <Text style={styles.livemapDesc}>동행들의 실시간 위치 보기 →</Text>
             </View>
           </Pressable>
+        ) : invitePostId ? (
+          <ActivityInviteCard postId={invitePostId} mine={mine} />
         ) : (
           <View style={[styles.bubble, mine && styles.bubbleMine]}>
             <Text style={styles.bubbleText}>{message.body}</Text>
@@ -87,6 +93,7 @@ export default function ActivityChat() {
           }
         />
         <View style={styles.inputBar}>
+          <ActivityShareButton onShare={(body) => mutateAsync(body).catch(() => {})} />
           <TextInput
             style={styles.input}
             value={draft}

@@ -12,10 +12,21 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { useMessages, useMyUserId, useSendMessage } from "@/features/matching/hooks";
+import { ActivityShareButton } from "@/components/activity-share-button";
+import { ActivityInviteCard } from "@/components/activity-invite-card";
+import { parseActivityInvite } from "@/features/activity/invite";
 import type { ChatMessage } from "@/features/matching/types";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 function Bubble({ message, mine }: { message: ChatMessage; mine: boolean }) {
+  const invitePostId = parseActivityInvite(message.body);
+  if (invitePostId) {
+    return (
+      <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
+        <ActivityInviteCard postId={invitePostId} mine={mine} />
+      </View>
+    );
+  }
   return (
     <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
       <View style={[styles.bubble, mine && styles.bubbleMine]}>
@@ -53,6 +64,7 @@ export default function Chat() {
           contentContainerStyle={styles.list}
         />
         <View style={styles.inputBar}>
+          <ActivityShareButton onShare={(body) => mutateAsync(body).catch(() => {})} />
           <TextInput
             style={styles.input}
             value={draft}

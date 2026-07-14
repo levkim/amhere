@@ -43,6 +43,42 @@ export async function fetchNearbyPosts(coords: Coords): Promise<Post[]> {
   }));
 }
 
+/** 포스트 단건 조회 (거리 무관) — 채팅 초대 링크로 받은 활동을 열 때 사용.
+ *  nearby 피드에 없는(멀리 있는) 활동도 열고 참가신청할 수 있게 한다. */
+export async function fetchPostDetail(id: string): Promise<Post | null> {
+  if (!supabase) return getMockPosts().find((p) => p.id === id) ?? null;
+
+  const { data, error } = await supabase.rpc("post_detail", { pid: id });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return {
+    id: row.id,
+    authorId: row.author_id,
+    nickname: row.nickname,
+    avatarUrl: row.avatar_url,
+    body: row.body,
+    imageUrl: row.image_url,
+    tags: row.tags ?? [],
+    activity: row.activity,
+    lat: row.lat,
+    lng: row.lng,
+    distanceM: row.distance_m ?? 0,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    helpfulCount: Number(row.helpful_count ?? 0),
+    iHelped: !!row.i_helped,
+    visibility: row.visibility === "friends" ? "friends" : "public",
+    checkInId: row.check_in_id ?? null,
+    joinedCount: Number(row.joined_count ?? 0),
+    placeName: row.place_name ?? null,
+    scheduledStartAt: row.scheduled_start_at ?? null,
+    checkinStatus: row.checkin_status ?? null,
+    checkinTitle: row.checkin_title ?? null,
+    checkinLocation: row.checkin_location ?? null,
+  };
+}
+
 /** "도움됐어요" 토글 */
 export async function toggleHelpful(postId: string, currentlyHelped: boolean): Promise<void> {
   if (!supabase) {

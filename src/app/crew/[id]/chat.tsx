@@ -13,17 +13,25 @@ import { useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/ui/screen";
 import { useCrewMessages, useSendCrewMessage } from "@/features/crew/hooks";
 import { useMyUserId } from "@/features/matching/hooks";
+import { ActivityShareButton } from "@/components/activity-share-button";
+import { ActivityInviteCard } from "@/components/activity-invite-card";
+import { parseActivityInvite } from "@/features/activity/invite";
 import type { CrewMessage } from "@/features/crew/api";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 function Bubble({ message, mine }: { message: CrewMessage; mine: boolean }) {
+  const invitePostId = parseActivityInvite(message.body);
   return (
     <View style={[styles.bubbleRow, mine && styles.bubbleRowMine]}>
       <View style={[styles.bubbleWrap, mine && styles.bubbleWrapMine]}>
         {!mine ? <Text style={styles.sender}>{message.senderNickname}</Text> : null}
-        <View style={[styles.bubble, mine && styles.bubbleMine]}>
-          <Text style={styles.bubbleText}>{message.body}</Text>
-        </View>
+        {invitePostId ? (
+          <ActivityInviteCard postId={invitePostId} mine={mine} />
+        ) : (
+          <View style={[styles.bubble, mine && styles.bubbleMine]}>
+            <Text style={styles.bubbleText}>{message.body}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -61,6 +69,7 @@ export default function CrewChat() {
           }
         />
         <View style={styles.inputBar}>
+          <ActivityShareButton onShare={(body) => mutateAsync(body).catch(() => {})} />
           <TextInput
             style={styles.input}
             value={draft}
