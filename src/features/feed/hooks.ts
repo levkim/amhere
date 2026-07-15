@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
 import { useEffectiveCoords } from "@/stores/location";
+import { useFeedPrefs, UNLIMITED_RADIUS_M } from "@/stores/feed-prefs";
 import { createPost, deletePost, fetchNearbyPosts, fetchPostDetail, toggleHelpful } from "./api";
 import type { NewPost, Post } from "./types";
 
@@ -10,9 +11,12 @@ const regionKey = (lat: number, lng: number) =>
 
 export function useNearbyPosts() {
   const coords = useEffectiveCoords();
+  const radiusM = useFeedPrefs((s) => s.radiusM);
+  const effectiveRadius = radiusM ?? UNLIMITED_RADIUS_M;
   return useQuery({
-    queryKey: ["feed", regionKey(coords.lat, coords.lng)],
-    queryFn: () => fetchNearbyPosts(coords),
+    // 반경도 키에 포함 → 반경 바꾸면 자동 재조회
+    queryKey: ["feed", regionKey(coords.lat, coords.lng), radiusM ?? "unlimited"],
+    queryFn: () => fetchNearbyPosts(coords, effectiveRadius),
     refetchInterval: 30_000,
   });
 }

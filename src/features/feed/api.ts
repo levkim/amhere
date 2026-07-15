@@ -4,15 +4,13 @@ import type { Coords } from "@/stores/location";
 import type { NewPost, Post } from "./types";
 import { addMockPost, deleteMockPost, getMockPosts, toggleMockHelpful } from "./mock";
 
-const RADIUS_M = 5000;
-
-export async function fetchNearbyPosts(coords: Coords): Promise<Post[]> {
+export async function fetchNearbyPosts(coords: Coords, radiusM: number): Promise<Post[]> {
   if (!supabase) return getMockPosts(); // 데모 모드
 
   const { data, error } = await supabase.rpc("nearby_posts", {
     lat: coords.lat,
     lng: coords.lng,
-    radius_m: RADIUS_M,
+    radius_m: radiusM,
   });
   if (error) throw new Error(error.message);
 

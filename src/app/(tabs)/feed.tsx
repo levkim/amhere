@@ -13,6 +13,7 @@ import { Screen } from "@/components/ui/screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PostCard } from "@/components/post-card";
 import { UpcomingActivities } from "@/components/upcoming-activities";
+import { RadiusSelector } from "@/components/radius-selector";
 import { useNearbyPosts } from "@/features/feed/hooks";
 import type { Post } from "@/features/feed/types";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
@@ -69,6 +70,9 @@ export default function Feed() {
 
   return (
     <Screen padded={false} edges={["top"]}>
+      <View style={styles.radiusBar}>
+        <RadiusSelector />
+      </View>
       {availableTags.length > 0 ? (
         <View style={styles.filterBar}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -140,6 +144,11 @@ export default function Feed() {
 
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
+  radiusBar: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
   filterBar: { paddingVertical: spacing.sm },
   filterChips: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md },
   chip: {
